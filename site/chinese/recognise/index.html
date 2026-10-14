@@ -107,6 +107,16 @@ dialog p{font-size:13px;line-height:1.7}
 #editStatus{min-height:18px;font-size:12.5px;font-weight:800;color:var(--red);margin:8px 0;line-height:1.6}
 .io-note{font-size:11px}
 #ioText{width:100%;font-family:ui-monospace,Consolas,'Courier New',monospace;font-size:16px;border:1px solid #d8bdb4;border-radius:10px;padding:8px;color:var(--ink);margin:8px 0;resize:vertical}
+#populateBtn{display:block;margin:0 0 10px}
+.glyph.len2{font-size:clamp(60px,16vw,88px)}
+.glyph.len3{font-size:clamp(44px,12vw,60px)}
+.glyph.len4{font-size:clamp(32px,9vw,46px)}
+.choices button.len2{font-size:26px}
+.choices button.len3{font-size:21px}
+.choices button.len4{font-size:17px}
+.tile .back.len2{font-size:24px}
+.tile .back.len3{font-size:19px}
+.tile .back.len4{font-size:14px}
 @media(display-mode:standalone){.shell{padding-top:max(20px,env(safe-area-inset-top))}}
 @media(max-width:420px){.choices button{font-size:34px}.hero p{font-size:13px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -151,7 +161,8 @@ dialog p{font-size:13px;line-height:1.7}
 <summary>✎ 編輯字卡 · Edit cards</summary>
 <p class="ednote">喺呢度即時改字卡內容：每張卡有<b>字、Jyutping、英文、emoji、例詞</b>，可以加卡、刪卡、開新組。淨係輸入個字，AI 會自動幫你填埋其餘欄位（撳 ✨ 可以重新填）；修改只會儲存喺呢部裝置嘅瀏覽器 — 用 Export / Import 複製去另一部裝置，或者改返 HTML 檔先可以永久更新所有裝置。Type a character and AI fills in the rest (✨ to refill); edits save on this device only — use Export/Import to move them.</p>
 <div class="edit-controls"><select id="editSet" aria-label="揀組別 · Choose a set to edit"></select><button class="secondary" id="newSetBtn" type="button">＋ 新一組</button></div>
-<div class="edit-setrow"><input id="editSetName" maxlength="16" aria-label="組名 · Set name" placeholder="組名"><input id="editSetIcon" maxlength="8" aria-label="組 emoji · Set emoji" placeholder="emoji"><button class="danger" id="delSetBtn" type="button">刪除這組</button></div>
+<div class="edit-setrow"><input id="editSetName" maxlength="16" aria-label="組名 · Set name" placeholder="組名（主題）· topic"><input id="editSetIcon" aria-label="組 emoji · Set emoji" placeholder="emoji"><button class="danger" id="delSetBtn" type="button">刪除這組</button></div>
+<button class="secondary" id="populateBtn" type="button">✨ AI 生成 10 個字</button>
 <div id="editList"></div>
 <button class="secondary" id="addCharBtn" type="button">＋ 加字 · Add character</button>
 <p id="editStatus" role="status" aria-live="polite"></p>
@@ -166,6 +177,17 @@ dialog p{font-size:13px;line-height:1.7}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
+function gslice(s,n){return Array.from(String(s==null?'':s)).slice(0,n).join('')}
+function eseq(s,n){ // first n emoji sequences (ZWJ-aware, e.g. keeps 👨‍👩‍👧‍👦 whole)
+  const str=String(s==null?'':s);
+  if(typeof Intl!=='undefined'&&Intl.Segmenter){
+    const out=[];
+    for(const {segment} of new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(str)){out.push(segment);if(out.length===n)break}
+    return out.join('');
+  }
+  return gslice(str,n);
+}
+function lenCls(s){const n=Array.from(String(s==null?'':s)).length;return n>=4?'len4':n===3?'len3':n===2?'len2':''}
 const NOSTORAGE=/[?&]nostorage=1/.test(location.search); // test hook: simulates blocked storage
 // [character, jyutping, english, emoji, example word]
 const BUILTIN_SETS=[
@@ -180,7 +202,7 @@ const BUILTIN_SETS=[
 // Parent edits (編輯字卡) live under their own key, separate from progress, so a
 // corrupt progress record can never wipe a customised deck.
 const SETS_KEY='trinity-recognise-sets-v1';
-function cloneSets(a){return a.map(s=>({id:String(s.id),zh:String(s.zh),ic:String(s.ic),c:s.c.map(e=>[String(e[0]).slice(0,4),String(e[1]).slice(0,24),String(e[2]).slice(0,48),String(e[3]).slice(0,8),String(e[4]).slice(0,24)])}))}
+function cloneSets(a){return a.map(s=>({id:String(s.id),zh:String(s.zh),ic:String(s.ic),c:s.c.map(e=>[gslice(e[0],8),gslice(e[1],24),gslice(e[2],48),eseq(e[3],3),gslice(e[4],24)])}))}
 function validSets(v){
   if(!v||!Array.isArray(v.sets)||!v.sets.length)return null;
   const out=[],ids=new Set();
@@ -190,7 +212,7 @@ function validSets(v){
     const rows=[];
     for(const e of s.c){
       if(!Array.isArray(e)||e.length<5||typeof e[0]!=='string'||!e[0].trim())return null;
-      rows.push([e[0].trim().slice(0,4),String(e[1]||'').slice(0,24),String(e[2]||'').slice(0,48),String(e[3]||'').slice(0,8),String(e[4]||'').slice(0,24)]);
+      rows.push([gslice(e[0],8),gslice(e[1],24),gslice(e[2],48),eseq(e[3],3),gslice(e[4],24)]);
     }
     ids.add(s.id);out.push({id:s.id.slice(0,24),zh:s.zh.slice(0,16),ic:s.ic.slice(0,8),c:rows});
   }
@@ -291,7 +313,7 @@ function renderLearn(){
   top.append(el('span','pill','🌱 學一學 · Flashcards'),el('span',null,(learnIdx+1)+' / '+cards.length));
   const flash=el('button','flash');flash.setAttribute('aria-label',ch+' · tap to hear');
   const fe=el('div',null,'');fe.style.fontSize='30px';fe.textContent=em;
-  flash.append(el('span','glyph',ch),fe,el('span','jyut',jy),el('span','enmean',en));
+  flash.append(el('span','glyph '+lenCls(ch),ch),fe,el('span','jyut',jy),el('span','enmean',en));
   flash.onclick=()=>speak(ch);
   const wordrow=el('div','wordrow');
   wordrow.append(el('span','lbl','例詞'),el('span',null,word));
@@ -339,7 +361,7 @@ function renderQuiz(){
   shuffle(sameSet);
   const opts=shuffle([ch,...sameSet.slice(0,3)]);
   opts.forEach(o=>{
-    const b=el('button',null,o);b.setAttribute('aria-label','揀 '+o);
+    const b=el('button',lenCls(o),o);b.setAttribute('aria-label','揀 '+o);
     b.onclick=()=>answerQuiz(b,o,ch,word);
     choices.append(b);
   });
@@ -388,7 +410,7 @@ function renderMatch(){
   matchTiles.forEach((t,i)=>{
     const b=el('button','tile');b.dataset.i=i;b.setAttribute('aria-label','蓋住的卡片');
     const inn=el('div','in');
-    const front=el('div','f front','字'),back=el('div','f back'+(t.kind==='c'?' c':''),t.face);
+    const front=el('div','f front','字'),back=el('div','f back'+(t.kind==='c'?' c':'')+' '+lenCls(t.face),t.face);
     inn.append(front,back);b.append(inn);
     b.onclick=()=>flipTile(b,t);
     board.append(b);
@@ -497,8 +519,61 @@ function parseAiCard(text){
   let v;
   try{v=JSON.parse(m[0])}catch(e){return null}
   const g=k=>typeof v[k]==='string'?v[k].trim():'';
-  const out={jyutping:g('jyutping').slice(0,24),english:g('english').slice(0,48),emoji:g('emoji').slice(0,8),word:g('word').slice(0,24)};
+  const out={jyutping:gslice(g('jyutping'),24),english:gslice(g('english'),48),emoji:eseq(g('emoji'),3),word:gslice(g('word'),24)};
   return (out.jyutping||out.english||out.emoji||out.word)?out:null;
+}
+function parseAiCards(text){
+  if(typeof text!=='string')return null;
+  const m=text.match(/\{[\s\S]*\}/);
+  if(!m)return null;
+  let v;
+  try{v=JSON.parse(m[0])}catch(e){return null}
+  const arr=v&&Array.isArray(v.cards)?v.cards:(Array.isArray(v)?v:null);
+  if(!arr)return null;
+  const out=[];
+  for(const e of arr){
+    if(!Array.isArray(e)||typeof e[0]!=='string'||!e[0].trim())continue;
+    out.push([gslice(e[0],8),gslice(e[1],24),gslice(e[2],48),eseq(e[3],3),gslice(e[4],24)]);
+    if(out.length===10)break;
+  }
+  return out.length?out:null;
+}
+async function aiPopulateSet(sid){
+  const s0=SETS.find(x=>x.id===sid);if(!s0)return;
+  const topic=s0.zh.trim();
+  const btn=$('populateBtn');
+  if(!topic||topic==='新組'){$('editStatus').textContent='先改組名做主題（例如 國家、水果）· give the set a topic name first.';return}
+  if(btn){btn.disabled=true;btn.textContent='⏳ AI 諗緊…'}
+  try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),15000);
+    const body=JSON.stringify({
+      model:'kimi-k2.6',
+      messages:[
+        {role:'system',content:'You fill in Chinese learning flashcards for a 6-year-old child in Hong Kong. Reply with ONLY a JSON object - no markdown fences, no extra text.'},
+        {role:'user',content:'Topic: '+topic+'\nReturn JSON exactly shaped like {"cards":[["法國","faat3 gwok3","France","🇫🇷","法包"]]}\n- give exactly 10 common Traditional Chinese words on this topic for a young child\n- words may be 2 to 4 characters\n- each item: [word, jyutping with tone numbers, very simple english meaning, one single emoji, one short example word or phrase containing the word]\n- Hong Kong usage'}
+      ],
+      thinking:{type:'disabled'}
+    });
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body});
+    clearTimeout(timer);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const cards=parseAiCards(data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content);
+    if(!cards)throw new Error('bad shape');
+    const s=SETS.find(x=>x.id===sid);if(!s)return; // set deleted while AI was thinking
+    const existing=new Set(s.c.map(e=>e[0]));
+    const isBlank=s.c.length===1&&s.c[0][0]==='？'&&!s.c[0][1]&&!s.c[0][2]&&!s.c[0][3]&&!s.c[0][4];
+    if(isBlank)s.c=[];
+    let added=0;
+    for(const row of cards){if(existing.has(row[0]))continue;s.c.push(row);existing.add(row[0]);added++}
+    commitSets(true);renderEditSet();
+    $('editStatus').textContent=added?'✨ AI 生成咗 '+added+' 個「'+topic+'」字卡 · AI added '+added+' cards.':'「'+topic+'」已經有齊 AI 建議嘅字 · all AI suggestions are already in this set.';
+  }catch(e){
+    $('editStatus').textContent='✋ AI 生成唔到（呢個網站未開通 AI，或者暫時連唔上）— 可以自己逐張加 · AI generation unavailable — add cards by hand.';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✨ AI 生成 10 個字'}
+  }
 }
 async function aiFill(row,inputs,btn,syncSum){
   const ch=row[0];
@@ -546,6 +621,7 @@ function syncEditorSelect(){
 }
 function openEditor(){
   const sel=$('editSet');sel.replaceChildren();
+  $('populateBtn').style.display=AI_OK?'':'none';
   SETS.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.ic+' '+s.zh+' · '+s.c.length+' 字';sel.append(o)});
   if(!SETS.some(x=>x.id===editSetId))editSetId=SETS[0].id;
   sel.value=editSetId;
@@ -566,13 +642,15 @@ function editRow(s,row,i){
   d.append(sum);
   const form=el('div','editform');
   const inputs=[];
-  [['字 Character',0,4],['Jyutping',1,24],['English',2,48],['Emoji',3,8],['例詞 Word',4,24]].forEach(([lbl,fi,max])=>{
+  [['字 Character',0,8],['Jyutping',1,24],['English',2,48],['Emoji',3,3],['例詞 Word',4,24]].forEach(([lbl,fi,cap])=>{
     const label=el('label',null,lbl);
-    const inp=document.createElement('input');inp.value=row[fi];inp.maxLength=max;
+    const inp=document.createElement('input');inp.value=row[fi];
     inputs[fi]=inp;
+    if(fi===0)inp.onfocus=()=>{if(inp.value==='？')inp.select()};
     inp.oninput=deb(()=>{
-      const v=inp.value.trim();
-      if(fi===0&&!v){$('editStatus').textContent='字唔可以空 · the character itself cannot be empty.';inp.value=row[0];return}
+      const v=(fi===3?eseq:gslice)(inp.value.trim(),cap);
+      if(v!==inp.value.trim())inp.value=v;
+      if(fi===0&&!v){$('editStatus').textContent='字未填 — 打個字入去啦 · waiting for the character.';return}
       row[fi]=v;syncSum();
       let dup=false;SETS.forEach(x=>x.c.forEach(e=>{if(e!==row&&e[0]===row[0])dup=true}));
       commitSets(false);
@@ -610,14 +688,21 @@ function commitSets(structural,persist){
 $('editSet').onchange=()=>{editSetId=$('editSet').value;renderEditSet()};
 $('editSetName').oninput=deb(()=>{
   const s=SETS.find(x=>x.id===editSetId);if(!s)return;
-  const v=$('editSetName').value.trim();
-  if(!v){$('editSetName').value=s.zh;return}
-  s.zh=v.slice(0,16);commitSets(false);
+  const v=gslice($('editSetName').value.trim(),16);
+  if(v!==$('editSetName').value.trim())$('editSetName').value=v;
+  if(!v){$('editStatus').textContent='組名未填 — 打個主題名入去（例如 國家）· waiting for a topic name.';return}
+  const changed=s.zh!==v;
+  s.zh=v;commitSets(false);
+  if(changed&&AI_OK&&Array.from(v).length>=2){
+    const blank=s.c.length===1&&s.c[0][0]==='？'&&!s.c[0][1]&&!s.c[0][2]&&!s.c[0][3]&&!s.c[0][4];
+    if(blank)aiPopulateSet(s.id);
+  }
 });
 $('editSetIcon').oninput=deb(()=>{
   const s=SETS.find(x=>x.id===editSetId);if(!s)return;
-  s.ic=($('editSetIcon').value.trim()||'✨').slice(0,8);commitSets(false);
+  s.ic=(eseq($('editSetIcon').value.trim(),3)||'✨');commitSets(false);
 });
+$('populateBtn').onclick=()=>aiPopulateSet(editSetId);
 $('addCharBtn').onclick=()=>{
   const s=SETS.find(x=>x.id===editSetId);if(!s)return;
   s.c.push(['？','','','','']);

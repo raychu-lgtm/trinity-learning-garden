@@ -36,12 +36,16 @@ calls, no images — works fully offline once uploaded.
 - **✨ AI auto-fill (optional)** — in the card editor, type just the character
   and the rest of the card (Jyutping, simple English, an emoji, a 2-character
   example word) is filled in automatically; a ✨ AI 幫手填 button re-fills or
-  fills any card on demand. It calls the site's own `POST /api/ai` route
-  (Kimi via the Caddy proxy — the API key stays server-side; nothing is in
-  this file). **The app never depends on it:** if the route isn't deployed
-  yet, is down, or times out, you get a friendly「自己填」message and manual
-  editing works exactly as before. AI results are per-device edits like all
-  card edits — check them before showing them to your child.
+  fills any card on demand. **AI topic generation**: name a new set after a
+  topic (e.g. 國家) and it auto-fills with 10 word cards on that topic —
+  multi-character words (法國, 西班牙) welcome, duplicates skipped; the
+  ✨ AI 生成 10 個字 button also adds more on demand. It calls the site's own
+  `POST /api/ai` route (Kimi via the Caddy proxy — the API key stays
+  server-side; nothing is in this file). **The app never depends on it:** if
+  the route isn't deployed yet, is down, or times out, you get a friendly
+  「自己填」message and manual editing works exactly as before. AI results are
+  per-device edits like all card edits — check them before showing them to
+  your child.
 
 ## Upload steps
 
