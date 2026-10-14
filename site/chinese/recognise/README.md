@@ -110,3 +110,9 @@ harmlessly, and counts update automatically.
   it was tested.
 - Progress lives in the browser on each device; there is no sync. Card edits
   made in the parent corner are per-device too until you Export/Import them.
+
+## Deployment
+
+This app deploys automatically: a small git-sync container on the NAS pulls
+`main` into the Caddy web root every 60 seconds. Edit here (or on github.com),
+push, and it is live within a minute.
