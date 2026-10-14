@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-<!-- This site is hosted on Netlify. Anyone can build and deploy a site
-     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=2187fd9c-0f5c-4169-8353-5cc74a5b61d0
-     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Syllable Scramble - Phonics Mastery</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -280,10 +277,10 @@
 
     <script>
         // ==================== CONFIGURATION ====================
-        // For LOCAL testing: set USE_LOCAL_KEY = true and put your key in localStorage
-        // For HOSTED (Netlify): API calls go through /.netlify/functions/gemini-proxy
-        const USE_LOCAL_KEY = false;
-        const LOCAL_API_KEY = localStorage.getItem('phonics_api_key') || '';
+        // AI calls go to this site's own POST /api/ai route (Kimi, proxied by Caddy on
+        // the NAS, which adds the API key server-side). No key ever lives in this file.
+        // Everything except the optional AI helpers works without that route.
+        const AI_MODEL = 'kimi-k2.6';
         
         const CLASS_LIST = []; 
         const IS_EXPORTED = false;
@@ -340,108 +337,106 @@
             photoLoader: () => document.getElementById('photo-loader')
         };
 
-        // ==================== API CALL (Smart Routing) ====================
-        // If hosted on Netlify, calls the secure proxy.
-        // If opened locally/offline with USE_LOCAL_KEY=true, calls OpenRouter directly.
-        async function callAI(userPrompt, systemPrompt = "", retries = 3) {
-            const isLocal = window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1' ||
-                            window.location.protocol === 'file:';
-            
-            if (isLocal && USE_LOCAL_KEY) {
-                return callOpenRouterDirect(userPrompt, systemPrompt, retries);
-            } else {
-                return callNetlifyProxy(userPrompt, systemPrompt, retries);
-            }
-        }
-
-        async function callNetlifyProxy(userPrompt, systemPrompt, retries) {
-            const url = 'https://trinityword.netlify.app/.netlify/functions/openrouter-proxy';
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                        body: JSON.stringify({ userPrompt, systemPrompt })
-                    });
-                    if (!res.ok) {
-                        const err = await res.text();
-                        throw new Error(`Proxy error: ${err}`);
-                    }
-                    const data = await res.json();
-                    return data.text || "";
-                } catch (e) {
-                    if (i === retries - 1) throw e;
-                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-                }
-            }
-            return "";
-        }
-
-        async function callOpenRouterDirect(userPrompt, systemPrompt, retries = 3) {
-            if (!LOCAL_API_KEY) {
-                throw new Error('No API key set. Add your OpenRouter key to localStorage as "phonics_api_key" or set it in the LOCAL_API_KEY variable.');
-            }
-            const url = 'https://openrouter.ai/api/v1/chat/completions';
+        // ==================== AI (same-origin /api/ai → Kimi) ====================
+        // OpenAI-style chat request. The server adds the key; the page never sees it.
+        // Retries only on network errors / 5xx. A missing route (404/405) fails fast
+        // with a friendly message so the game never hangs.
+        async function callAI(userPrompt, systemPrompt = "", retries = 2) {
+            if (!/^https?:$/.test(location.protocol)) throw new Error('The AI helper only works on the website, not from a saved file.');
             const messages = [];
             if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
             messages.push({ role: 'user', content: userPrompt });
-            
-            for (let i = 0; i < retries; i++) {
+            const body = JSON.stringify({ model: AI_MODEL, messages, max_tokens: 800, thinking: { type: 'disabled' } });
+            for (let i = 0; i <= retries; i++) {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 25000);
                 try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${LOCAL_API_KEY}`,
-                            'HTTP-Referer': 'https://magicwords.app',
-                            'X-Title': 'Magic Words Phonics Game'
-                        },
-                        body: JSON.stringify({
-                            model: 'meta-llama/llama-3-8b-instruct',
-                            messages: messages,
-                            temperature: 0.7
-                        })
-                    });
-                    if (!res.ok) {
-                        const err = await res.text();
-                        throw new Error(`OpenRouter error: ${err}`);
-                    }
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: ctrl.signal });
+                    if (res.status === 404 || res.status === 405) throw Object.assign(new Error('The AI helper is not switched on yet.'), { fatal: true });
+                    if (res.status === 429) throw Object.assign(new Error('The AI helper is busy. Please try again in a minute.'), { fatal: true });
+                    if (!res.ok) throw new Error('AI helper error (' + res.status + ')');
                     const data = await res.json();
-                    return data.choices?.[0]?.message?.content || "";
+                    return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim();
                 } catch (e) {
-                    if (i === retries - 1) throw e;
-                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-                }
+                    if (e.fatal || i === retries) throw e.name === 'AbortError' ? new Error('The AI helper took too long. Please try again.') : e;
+                    await new Promise(r => setTimeout(r, 800 * Math.pow(2, i)));
+                } finally { clearTimeout(timer); }
             }
-            return "";
+            return '';
         }
 
-        // ==================== IMAGE DISPLAY (Pollinations.ai - FREE, no key!) ====================
-        function generateWordPhoto(word) {
-            if (IS_EXPORTED) {
-                UI.photoLoader().classList.add('hidden');
-                return;
-            }
+        // ==================== WORD PICTURE (emoji) ====================
+        // Order: the word's own icon → saved emoji for this word → built-in map
+        // (with simple plural/-ing/-ed stemming) → ask the AI once and save → 🌟.
+        const EMOJI_CACHE_KEY = 'trinity-phonics-emoji-v1';
+        const EMOJI_MAP = {
+            // animals
+            cat:'🐱',dog:'🐶',puppy:'🐶',kitten:'🐱',lion:'🦁',tiger:'🐯',bear:'🐻',panda:'🐼',monkey:'🐒',elephant:'🐘',giraffe:'🦒',zebra:'🦓',horse:'🐴',pony:'🐴',cow:'🐮',pig:'🐷',sheep:'🐑',goat:'🐐',chicken:'🐔',hen:'🐔',duck:'🦆',goose:'🪿',owl:'🦉',eagle:'🦅',parrot:'🦜',penguin:'🐧',bird:'🐦',fish:'🐟',shark:'🦈',whale:'🐳',dolphin:'🐬',octopus:'🐙',crab:'🦀',lobster:'🦞',shrimp:'🦐',snail:'🐌',slug:'🐌',frog:'🐸',turtle:'🐢',tortoise:'🐢',snake:'🐍',lizard:'🦎',crocodile:'🐊',alligator:'🐊',dinosaur:'🦕',rabbit:'🐰',bunny:'🐰',mouse:'🐭',rat:'🐀',hamster:'🐹',fox:'🦊',wolf:'🐺',deer:'🦌',camel:'🐫',kangaroo:'🦘',koala:'🐨',hippo:'🦛',hippopotamus:'🦛',rhino:'🦏',rhinoceros:'🦏',gorilla:'🦍',sloth:'🦥',squirrel:'🐿️',hedgehog:'🦔',bat:'🦇',bee:'🐝',butterfly:'🦋',ant:'🐜',ladybird:'🐞',ladybug:'🐞',spider:'🕷️',worm:'🪱',caterpillar:'🐛',mosquito:'🦟',unicorn:'🦄',dragon:'🐉',peacock:'🦚',flamingo:'🦩',swan:'🦢',seal:'🦭',jellyfish:'🪼',
+            // food
+            apple:'🍎',banana:'🍌',orange:'🍊',lemon:'🍋',grape:'🍇',strawberry:'🍓',cherry:'🍒',peach:'🍑',pear:'🍐',pineapple:'🍍',mango:'🥭',watermelon:'🍉',melon:'🍈',coconut:'🥥',kiwi:'🥝',tomato:'🍅',potato:'🥔',carrot:'🥕',corn:'🌽',broccoli:'🥦',cucumber:'🥒',mushroom:'🍄',onion:'🧅',garlic:'🧄',pepper:'🫑',bread:'🍞',toast:'🍞',sandwich:'🥪',burger:'🍔',hamburger:'🍔',pizza:'🍕',noodle:'🍜',spaghetti:'🍝',pasta:'🍝',rice:'🍚',dumpling:'🥟',egg:'🥚',cheese:'🧀',butter:'🧈',milk:'🥛',creamy:'🥛',honey:'🍯',cake:'🎂',cookie:'🍪',biscuit:'🍪',chocolate:'🍫',candy:'🍬',sweet:'🍬',lollipop:'🍭',icecream:'🍦',popcorn:'🍿',pancake:'🥞',soup:'🍲',salad:'🥗',juice:'🧃',tea:'🍵',coffee:'☕',water:'💧',sausage:'🌭',doughnut:'🍩',donut:'🍩',pie:'🥧',
+            // nature & weather
+            sun:'☀️',sunny:'☀️',moon:'🌙',star:'⭐',sky:'🌤️',cloud:'☁️',cloudy:'☁️',rain:'🌧️',rainy:'🌧️',rainbow:'🌈',snow:'❄️',snowy:'❄️',snowman:'⛄',wind:'🌬️',windy:'🌬️',storm:'⛈️',thunder:'⛈️',lightning:'⚡',tree:'🌳',forest:'🌲',flower:'🌸',rose:'🌹',sunflower:'🌻',tulip:'🌷',leaf:'🍃',grass:'🌱',plant:'🪴',cactus:'🌵',spiky:'🌵',mountain:'⛰️',volcano:'🌋',beach:'🏖️',sea:'🌊',ocean:'🌊',wave:'🌊',river:'🏞️',island:'🏝️',desert:'🏜️',fire:'🔥',rock:'🪨',stone:'🪨',shell:'🐚',earth:'🌍',planet:'🪐',world:'🌍',
+            // home, school & things
+            house:'🏠',home:'🏠',school:'🏫',book:'📖',pencil:'✏️',pen:'🖊️',crayon:'🖍️',paper:'📄',bag:'🎒',backpack:'🎒',ruler:'📏',scissors:'✂️',computer:'💻',phone:'📱',clock:'⏰',watch:'⌚',key:'🔑',door:'🚪',window:'🪟',chair:'🪑',bed:'🛏️',lamp:'💡',light:'💡',umbrella:'☂️',ball:'⚽',football:'⚽',basketball:'🏀',kite:'🪁',balloon:'🎈',gift:'🎁',present:'🎁',toy:'🧸',teddy:'🧸',doll:'🪆',robot:'🤖',drum:'🥁',guitar:'🎸',piano:'🎹',music:'🎵',song:'🎵',hat:'🎩',crown:'👑',shoe:'👟',sock:'🧦',shirt:'👕',dress:'👗',glasses:'👓',ring:'💍',bell:'🔔',candle:'🕯️',magnet:'🧲',brush:'🖌️',paint:'🎨',camera:'📷',map:'🗺️',flag:'🚩',
+            // transport & places
+            car:'🚗',bus:'🚌',taxi:'🚕',truck:'🚚',train:'🚆',tram:'🚋',bicycle:'🚲',bike:'🚲',plane:'✈️',aeroplane:'✈️',airplane:'✈️',helicopter:'🚁',rocket:'🚀',boat:'⛵',ship:'🚢',ferry:'⛴️',tractor:'🚜',ambulance:'🚑',castle:'🏰',park:'🏞️',hospital:'🏥',
+            // people & body
+            baby:'👶',boy:'👦',girl:'👧',mother:'👩',mum:'👩',mummy:'👩',father:'👨',dad:'👨',daddy:'👨',grandma:'👵',grandmother:'👵',grandpa:'👴',grandfather:'👴',family:'👪',friend:'🧑‍🤝‍🧑',teacher:'🧑‍🏫',doctor:'🧑‍⚕️',king:'🤴',queen:'👸',princess:'👸',prince:'🤴',pirate:'🏴‍☠️',wizard:'🧙',fairy:'🧚',ghost:'👻',monster:'👾',eye:'👁️',ear:'👂',nose:'👃',mouth:'👄',hand:'✋',foot:'🦶',tooth:'🦷',heart:'❤️',brain:'🧠',
+            // feelings & describing words
+            happy:'😊',pleasant:'😊',sad:'😢',angry:'😠',scared:'😱',surprised:'😮',sleepy:'😴',tired:'😴',hungry:'😋',funny:'😂',silly:'🤪',quiet:'🤫',loud:'📢',noisy:'📢',roaring:'🦁',roar:'🦁',wet:'💧',dry:'🏜️',hot:'🔥',cold:'🥶',big:'🐘',small:'🐜',tiny:'🐜',gigantic:'🦖',huge:'🦖',fast:'⚡',slow:'🐢',soft:'🧸',hard:'🧱',rough:'🧱',smooth:'🫧',slimy:'🐌',sticky:'🍯',fishy:'🐟',spotty:'🐕',stripy:'🦓',fluffy:'🐑',shiny:'✨',sparkly:'✨',bright:'🌟',dark:'🌑',beautiful:'🌸',aromatic:'🌸',smelly:'🧦',delicious:'😋',yummy:'😋',sour:'🍋',sweetness:'🍬',
+            // actions
+            run:'🏃',jump:'🤸',swim:'🏊',dance:'💃',sing:'🎤',read:'📖',write:'✍️',draw:'🖍️',sleep:'😴',eat:'🍽️',drink:'🥤',play:'🧸',climb:'🧗',fly:'🕊️',cook:'🍳',laugh:'😂',cry:'😢',kick:'⚽',throw:'🤾',ride:'🚲',walk:'🚶',build:'🧱',clap:'👏'
+        };
+        let emojiCache = {};
+        try { emojiCache = JSON.parse(localStorage.getItem(EMOJI_CACHE_KEY)) || {}; } catch (e) { emojiCache = {}; }
+        const askedEmoji = new Set();
+        const EMOJI_RE = /\p{Extended_Pictographic}/u;
+
+        function lookupEmoji(word) {
+            const w = String(word || '').toLowerCase().replace(/[^a-z]/g, '');
+            if (!w) return '';
+            if (emojiCache[w]) return emojiCache[w];
+            const tries = [w];
+            if (w.endsWith('ies')) tries.push(w.slice(0, -3) + 'y');
+            if (w.endsWith('es')) tries.push(w.slice(0, -2));
+            if (w.endsWith('s')) tries.push(w.slice(0, -1));
+            if (w.endsWith('ing')) { tries.push(w.slice(0, -3)); tries.push(w.slice(0, -3) + 'e'); tries.push(w.slice(0, -4)); }
+            if (w.endsWith('ed')) { tries.push(w.slice(0, -2)); tries.push(w.slice(0, -1)); }
+            if (w.endsWith('y')) tries.push(w.slice(0, -1));
+            for (const t of tries) if (EMOJI_MAP[t]) return EMOJI_MAP[t];
+            return '';
+        }
+
+        function showWordEmoji(e) {
             UI.photo().classList.add('hidden');
-            UI.iconPlaceholder().classList.add('hidden');
-            UI.photoLoader().classList.remove('hidden');
-            
-            // Pollinations.ai is free and requires no API key
-            const encodedWord = encodeURIComponent(`child-friendly photo of ${word}`);
-            const seed = Math.floor(Math.random() * 10000);
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodedWord}?width=400&height=300&nologo=true&seed=${seed}`;
-            
-            UI.photo().src = imageUrl;
-            UI.photo().onload = () => {
-                UI.photo().classList.remove('hidden');
-                UI.photoLoader().classList.add('hidden');
-            };
-            UI.photo().onerror = () => {
-                UI.photo().classList.add('hidden');
-                UI.photoLoader().classList.add('hidden');
-                UI.iconPlaceholder().classList.remove('hidden');
-            };
+            UI.photoLoader().classList.add('hidden');
+            UI.iconPlaceholder().textContent = e;
+            UI.iconPlaceholder().classList.remove('hidden');
+        }
+
+        function generateWordPhoto(word, icon) {
+            const own = icon && icon !== '🌟' ? icon : '';
+            const found = own || lookupEmoji(word);
+            if (found) { showWordEmoji(found); return; }
+            const key = String(word || '').toLowerCase().replace(/[^a-z]/g, '');
+            if (IS_EXPORTED || !key || askedEmoji.has(key)) { showWordEmoji('🌟'); return; }
+            askedEmoji.add(key);
+            showWordEmoji('✨');
+            callAI(`Word: ${word}`, 'Reply with exactly ONE emoji that best pictures this English word for a 6-year-old. No words, no punctuation, just the emoji.', 0)
+                .then(text => {
+                    const m = (text || '').match(/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*/u);
+                    const e = m ? m[0] : '';
+                    if (e) {
+                        emojiCache[key] = e;
+                        try { localStorage.setItem(EMOJI_CACHE_KEY, JSON.stringify(emojiCache)); } catch (err) {}
+                    }
+                    const cur = activeWords[currentIndex];
+                    if (cur && String(cur.word).toLowerCase().replace(/[^a-z]/g, '') === key) showWordEmoji(e || '🌟');
+                })
+                .catch(() => {
+                    const cur = activeWords[currentIndex];
+                    if (cur && String(cur.word).toLowerCase().replace(/[^a-z]/g, '') === key) showWordEmoji('🌟');
+                });
         }
 
         // Clean AI word list response: remove preamble text, keep only valid words
@@ -551,7 +546,7 @@
             UI.nextBtn().classList.add('hidden');
             if (!IS_EXPORTED) UI.wizardBtn().classList.remove('hidden');
 
-            generateWordPhoto(data.word);
+            generateWordPhoto(data.word, data.icon);
 
             if (currentStep === 1) {
                 UI.levelBadge().innerText = "Phase 1: Sounds";
@@ -820,11 +815,10 @@
         function exportCode() {
             const raw = document.getElementById('custom-words-input').value.trim();
             if (!raw) return;
-            const list = raw.split('\n').map(l => ({ word: l.trim(), chunks: autoSplitSyllables(l.trim()), icon: '🌟' })).filter(i => i.word);
+            const list = raw.split('\n').map(l => ({ word: l.trim(), chunks: autoSplitSyllables(l.trim()), icon: lookupEmoji(l.trim()) || '🌟' })).filter(i => i.word);
             let s = document.documentElement.outerHTML;
             s = s.replace('const CLASS_LIST = [];', `const CLASS_LIST = ${JSON.stringify(list)};`);
             s = s.replace('const IS_EXPORTED = false;', 'const IS_EXPORTED = true;');
-            s = s.replace(/const LOCAL_API_KEY =.*?;/, 'const LOCAL_API_KEY = "";');
             const blob = new Blob(["<!DOCTYPE html>\n" + s], { type: 'text/html' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
