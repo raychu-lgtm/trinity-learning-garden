@@ -1,0 +1,34 @@
+# trinity-site-sync: pulls github.com/raychu-lgtm/trinity-learning-garden into
+# /data/repo (site-sync-data/repo on the NAS) every 120s.
+# trinity-web serves /data/repo/site read-only - see trinity-web.compose.yaml.
+# Pull only, never push. The repo is public: no token anywhere, and never put
+# one in the remote URL.
+services:
+  site-sync:
+    image: alpine/git:2.45.2
+    container_name: trinity-git-sync
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.5
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        test -d /data/repo/.git || git clone https://github.com/raychu-lgtm/trinity-learning-garden.git /data/repo
+        while true
+        do
+          git -C /data/repo fetch origin main && git -C /data/repo reset --hard FETCH_HEAD && git -C /data/repo clean -fdx
+          sleep 120
+        done
+    volumes:
+      - /volume2/appdata/home-platform/trinity/site-sync-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

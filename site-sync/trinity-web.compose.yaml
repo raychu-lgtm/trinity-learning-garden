@@ -1,0 +1,19 @@
+# trinity-web: unmodified except the site volume now points at the sync
+# container's clone (repo/site) instead of the old hand-uploaded folder.
+# Caddyfile mount and ports unchanged; image uses the plain caddy:2 tag.
+services:
+  trinity:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    volumes:
+      - /volume2/appdata/home-platform/trinity/site-sync-data/repo/site:/srv:ro
+      - /volume2/appdata/home-platform/trinity/Caddyfile:/etc/caddy/Caddyfile:ro
+    mem_limit: 128m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
