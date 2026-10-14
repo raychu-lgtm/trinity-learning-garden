@@ -1,0 +1,11 @@
+# Private ops notes - never publish
+HANDOFF.md
+
+# OS junk
+Thumbs.db
+.DS_Store
+Desktop.ini
+*.log
+.claude/
+.zcode/
+node_modules/

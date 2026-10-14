@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "Little Star Garden",
+  "short_name": "九因歌花園",
+  "description": "Gentle Cantonese multiplication practice for young learners.",
+  "lang": "zh-HK",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf9f1",
+  "theme_color": "#376951",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

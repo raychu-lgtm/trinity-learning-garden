@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trinity’s Learning Garden · 學習花園</title>
+<meta name="theme-color" content="#376951"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--ink:#294a40;--green:#376951;--mint:#e9f0e4;--cream:#fbf9f1;--gold:#ebbb55;--muted:#718076;--card:#fff;--line:#e3e8dc;
+--maths:#376951;--maths-bg:#e9f0e4;--chi:#a8433a;--chi-bg:#f7e6e2;--eng:#3f5f8f;--eng-bg:#e6ecf5;--sci:#9a5a2a;--sci-bg:#f6ebdd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Nunito,'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;line-height:1.45}
+a{color:inherit}
+.shell{max-width:1080px;margin:auto;padding:28px 42px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:19px}
+.logo{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--green);color:var(--gold);font-size:20px}
+.today{font-size:14px;color:var(--muted);font-weight:700}
+.hero{margin:34px 0 30px;padding:30px 34px;border-radius:28px;background:var(--mint);display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.hero h1{margin:6px 0 6px;font-size:clamp(28px,4.4vw,42px);line-height:1.15}
+.hero p{margin:0;color:var(--muted);font-weight:700}
+.tiny{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:900}
+.total{background:#fff;border-radius:22px;padding:16px 22px;text-align:center;min-width:170px;box-shadow:0 2px 0 var(--line)}
+.total b{display:block;font-size:30px;color:var(--green)}
+.total span{font-size:13px;color:var(--muted);font-weight:800}
+section.subject{margin-top:34px}
+.subject-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.subject-head h2{margin:0;font-size:24px}
+.subject-head .zh{color:var(--muted);font-weight:800}
+.chip{width:12px;height:12px;border-radius:4px;display:inline-block;align-self:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{position:relative;display:flex;flex-direction:column;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:24px;padding:22px;text-decoration:none;min-height:190px;transition:transform .15s,box-shadow .15s,border-color .15s}
+a.card:hover,a.card:focus-visible{transform:translateY(-3px);box-shadow:0 10px 24px rgba(41,74,64,.12);border-color:var(--accent)}
+a.card:focus-visible{outline:3px solid #aa6c27;outline-offset:4px}
+.icon{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:26px;font-weight:900;background:var(--accent-bg);color:var(--accent)}
+.card h3{margin:4px 0 0;font-size:21px}
+.card p{margin:0;color:var(--muted);font-size:15px;font-weight:700}
+.progress{margin-top:auto;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;color:var(--accent)}
+.bar{flex:1;height:10px;border-radius:99px;background:var(--accent-bg);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .6s}
+.go{margin-top:auto;font-weight:900;color:var(--accent)}
+.card.soon{border-style:dashed;background:transparent;color:var(--muted)}
+.card.soon .icon{opacity:.75}
+.card.soon h3{color:var(--ink);opacity:.8}
+.maths{--accent:var(--maths);--accent-bg:var(--maths-bg)}
+.chinese{--accent:var(--chi);--accent-bg:var(--chi-bg)}
+.english{--accent:var(--eng);--accent-bg:var(--eng-bg)}
+.science{--accent:var(--sci);--accent-bg:var(--sci-bg)}
+footer{margin-top:46px;color:var(--muted);font-size:13px;font-weight:700;text-align:center}
+@media (max-width:640px){.shell{padding:20px 16px 36px}.hero{padding:22px;border-radius:22px}.total{width:100%}}
+</style>
+</head>
+<body><div class="shell">
+<header><div class="brand"><span class="logo">✦</span><span>Trinity’s learning garden</span></div><div class="today" id="today"></div></header>
+
+<section class="hero"><div><div class="tiny">學習花園 · Learning garden</div><h1 id="hello">Hi Trinity! 🌱</h1><p>今日想學啲乜嘢？ What shall we learn today?</p></div>
+<div class="total"><b id="totalStars">✦ 0</b><span>stars collected · 粒星星</span></div></section>
+
+<section class="subject maths" aria-labelledby="h-maths">
+<div class="subject-head"><span class="chip" style="background:var(--maths)"></span><h2 id="h-maths">Maths</h2><span class="zh">數學</span></div>
+<div class="grid">
+<a class="card maths" href="maths/jiuyinge/">
+<div class="icon" style="font-size:19px">9×9</div><h3>九因歌</h3><p>Times tables · 聽一聽、填一填、小挑戰</p>
+<div class="progress"><span id="jyStars">✦ 0</span><div class="bar" aria-hidden="true"><i id="jyBar"></i></div><span id="jyFacts">0/81</span></div>
+</a>
+<div class="card soon maths" aria-disabled="true"><div class="icon">＋</div><h3>More maths soon</h3><p>新遊戲快將推出</p></div>
+</div></section>
+
+<section class="subject chinese" aria-labelledby="h-chi">
+<div class="subject-head"><span class="chip" style="background:var(--chi)"></span><h2 id="h-chi">Chinese</h2><span class="zh">中文</span></div>
+<div class="grid"><a class="card chinese" href="chinese/recognise/"><div class="icon">字</div><h3>認字樂園</h3><p>Character garden · 學一學、玩遊戲、配一配</p><div class="go">Let’s play →</div></a></div>
+</section>
+
+<section class="subject english" aria-labelledby="h-eng">
+<div class="subject-head"><span class="chip" style="background:var(--eng)"></span><h2 id="h-eng">English</h2><span class="zh">英文</span></div>
+<div class="grid">
+<a class="card english" href="english/phonics/"><div class="icon">Aa</div><h3>Phonics Machine</h3><p>Sound it out, then spell it · 拼音拼字遊戲</p><div class="go">Let’s play →</div></a>
+<div class="card soon english" aria-disabled="true"><div class="icon">＋</div><h3>More English soon</h3><p>快將推出</p></div>
+</div>
+</section>
+
+<section class="subject science" aria-labelledby="h-sci">
+<div class="subject-head"><span class="chip" style="background:var(--sci)"></span><h2 id="h-sci">Science</h2><span class="zh">科學</span></div>
+<div class="grid"><div class="card soon science" aria-disabled="true"><div class="icon">✿</div><h3>Coming soon</h3><p>Plants, animals and the sky · 快將推出</p></div></div>
+</section>
+
+<footer>Made for Trinity, with room to grow. Progress is saved on this device for now.</footer>
+</div>
+<script>
+'use strict';
+if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+const $=id=>document.getElementById(id);
+try{$('today').textContent=new Date().toLocaleDateString('zh-HK',{weekday:'long',month:'long',day:'numeric'})}catch(e){}
+let jy=null;
+try{jy=JSON.parse(localStorage.getItem('trinity-garden-v1'))}catch(e){}
+const name=(jy&&typeof jy.studentName==='string'&&jy.studentName.trim().slice(0,30))||'Trinity';
+$('hello').textContent='Hi '+name+'! 🌱';
+let total=0;
+if(jy&&Number.isFinite(jy.stars)){
+  const stars=Math.max(0,jy.stars|0);total+=stars;
+  const facts=jy.facts&&typeof jy.facts==='object'?jy.facts:{};
+  // same rule as the 九因歌 Parent corner: latest three attempts all correct and unassisted
+  const confident=Object.values(facts).filter(f=>f&&Array.isArray(f.recent)&&f.recent.length===3&&f.recent.every(Boolean)).length;
+  $('jyStars').textContent='✦ '+stars;
+  $('jyFacts').textContent=confident+'/81';
+  requestAnimationFrame(()=>{$('jyBar').style.width=Math.min(100,Math.round(confident/81*100))+'%'});
+}
+$('totalStars').textContent='✦ '+total;
+</script>
+</body>
+</html>

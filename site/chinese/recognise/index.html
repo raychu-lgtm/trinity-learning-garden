@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trinity’s Character Garden · 認字樂園</title>
+<meta name="theme-color" content="#a8433a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../../icon-192.png">
+<style>
+:root{--ink:#3d2a26;--red:#a8433a;--rose:#f7e6e2;--cream:#fbf9f1;--gold:#ebbb55;--muted:#8c746e;--line:#ead9d2;--ok:#2f5d2c;--okbg:#e7f2e4;--okline:#7cab77}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Nunito,'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;line-height:1.45;-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit;cursor:pointer;color:inherit;border:0;background:none;touch-action:manipulation;min-height:44px}
+button:focus-visible,input:focus-visible{outline:3px solid #aa6c27;outline-offset:4px}
+button:disabled{cursor:default}
+.shell{max-width:920px;margin:auto;padding:20px 16px 40px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.back{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:30px;padding:10px 16px;font-size:13px;font-weight:800;text-decoration:none;color:var(--ink)}
+.ghost{border:1px solid var(--line);background:#fff;border-radius:30px;padding:10px 16px;font-size:13px;font-weight:800}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:24px 0 18px;flex-wrap:wrap}
+.tiny{font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:800;color:var(--muted)}
+.hero h1{font-size:clamp(30px,7vw,40px);margin:8px 0 6px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted);font-weight:700;font-size:14.5px}
+.badge{background:var(--rose);border-radius:30px;padding:12px 18px;font-weight:900;color:var(--red);font-size:15px;white-space:nowrap}
+.modes{display:flex;gap:5px;background:#efe8e0;border-radius:16px;padding:6px;margin-bottom:16px}
+.modes button{flex:1;border-radius:12px;padding:13px 6px;font-weight:800;font-size:14px}
+.modes button.active{background:#fff;box-shadow:0 3px 7px rgba(61,42,38,.09);color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:26px;padding:20px;margin-bottom:16px}
+.pickhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:10px}
+.pickhead h3{margin:0;font-size:14px}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.set{display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid var(--line);border-radius:16px;padding:10px 6px;font-weight:800;background:#fff}
+.set .ic{font-size:22px}
+.set .nm{font-size:14px}
+.set .meta{font-size:11px;color:var(--muted);font-weight:800}
+.set.selected{border-color:var(--red);background:var(--rose)}
+.set.selected .meta{color:var(--red)}
+.stage{min-height:400px}
+.stage-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);font-weight:800}
+.pill{background:var(--rose);color:var(--red);border-radius:20px;padding:7px 12px;font-weight:800}
+.flash{width:100%;margin-top:14px;border-radius:22px;background:linear-gradient(180deg,#fff 0%,var(--rose) 130%);border:2px solid var(--line);padding:22px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.flash:active{transform:scale(.988)}
+.glyph{font-family:'Kaiti TC','Kaiti SC','BiauKai','DFKai-SB','KaiTi','Noto Sans TC','PingFang TC','Microsoft JhengHei',serif;font-size:clamp(96px,28vw,150px);line-height:1.15;font-weight:700;color:var(--ink)}
+.jyut{font-size:20px;color:var(--red);font-weight:900;letter-spacing:1px}
+.enmean{font-size:14px;color:var(--muted);font-weight:800}
+.wordrow{display:flex;align-items:center;gap:8px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size:19px;font-weight:900;flex-wrap:wrap;justify-content:center}
+.wordrow .lbl{font-size:11px;color:var(--muted);font-weight:800}
+.wordrow button{border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-weight:900;background:var(--rose);color:var(--red)}
+.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.primary{background:var(--red);color:#fff;border-radius:14px;padding:13px 20px;font-weight:800}
+.secondary{border:1px solid var(--line);background:#fbf3f0;border-radius:14px;padding:12px 18px;font-weight:800}
+.prompt{display:flex;flex-direction:column;align-items:center;gap:6px;margin:18px 0 4px}
+.pEmoji{font-size:clamp(64px,20vw,96px);line-height:1.2}
+.pEn{font-size:16px;font-weight:900;color:var(--muted)}
+.pYp{font-size:22px;font-weight:900;color:var(--red);letter-spacing:2px}
+.speakBig{width:96px;height:96px;border-radius:50%;background:var(--rose);color:var(--red);font-size:38px;display:grid;place-items:center;border:2px solid #eccfc7;margin-top:8px}
+.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+.choices button{border:2px solid var(--line);background:#fbf3f0;border-radius:18px;padding:18px 8px;font-size:38px;font-weight:900;font-family:'Kaiti TC','Kaiti SC','BiauKai','DFKai-SB','KaiTi','Noto Sans TC','PingFang TC','Microsoft JhengHei',serif;min-height:72px}
+.choices button.dim{opacity:.35;text-decoration:line-through}
+.choices button.good{background:var(--okbg);border-color:var(--okline);color:var(--ok)}
+.feedback{min-height:24px;margin-top:14px;text-align:center;font-weight:900;font-size:16px;color:var(--red)}
+.feedback.ok{color:var(--ok)}
+.hintline{font-size:13px;color:var(--muted);text-align:center;font-weight:800;margin-top:4px}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.tile{aspect-ratio:1;perspective:600px;padding:0}
+.tile .in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s}
+.tile.flipped .in{transform:rotateY(180deg)}
+.tile .f{position:absolute;inset:0;display:grid;place-items:center;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid var(--line)}
+.tile .front{background:var(--rose);color:var(--red);font-size:22px;font-weight:900}
+.tile .back{transform:rotateY(180deg);background:#fff;font-size:clamp(28px,9vw,42px);font-weight:900}
+.tile .back.c{font-family:'Kaiti TC','Kaiti SC','BiauKai','DFKai-SB','KaiTi','Noto Sans TC','PingFang TC','Microsoft JhengHei',serif}
+.tile.matched .f{border-color:var(--okline);background:var(--okbg)}
+.tile.matched{animation:pop .4s}
+@keyframes pop{50%{transform:scale(1.07)}}
+.summary{text-align:center;padding:30px 8px 10px}
+.summary .big{font-size:58px;line-height:1.2}
+.summary h2{margin:10px 0 6px;font-size:24px}
+.summary p{color:var(--muted);font-weight:800;margin:4px 0}
+.voice-note{font-size:11.5px;color:var(--muted);margin:12px 0 0;text-align:center;min-height:16px;font-weight:700}
+.foot{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:11px;font-weight:800;flex-wrap:wrap;margin-top:10px}
+dialog{border:1px solid var(--line);border-radius:24px;padding:26px;max-width:620px;width:92%;max-height:85vh}
+dialog::backdrop{background:#3d2a2655}
+dialog h2{margin:0 0 4px}
+dialog h3{font-size:14px;margin:16px 0 8px}
+dialog p{font-size:13px;line-height:1.7}
+.name-controls{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+.name-controls input{flex:1;min-width:0;font:inherit;font-size:16px;border:1px solid #d8bdb4;border-radius:12px;padding:12px;color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:var(--rose);border-radius:12px;padding:14px;font-size:12px;font-weight:800}
+.stat strong{display:block;font-size:24px;color:var(--red)}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.fact{background:#f6efec;border-radius:9px;padding:6px 10px;font-size:15px;font-weight:900}
+.fact small{color:var(--muted);font-weight:800}
+.danger{border:1px solid #ecc7bd;background:#fdf1ed;color:var(--red);border-radius:12px;padding:10px 14px;font-weight:800}
+#editorBox{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0;background:#fdf9f7}
+#editorBox summary{cursor:pointer;font-weight:900;padding:4px 0}
+#editorBox .ednote{font-size:12px;color:var(--muted);margin:8px 0;line-height:1.7}
+.edit-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 6px}
+.edit-controls select{flex:1;min-width:0;font:inherit;font-size:16px;border:1px solid #d8bdb4;border-radius:10px;padding:10px;background:#fff;color:var(--ink)}
+.edit-setrow{display:grid;grid-template-columns:1fr 76px auto;gap:8px;margin:6px 0 10px}
+.edit-setrow input{min-width:0;font:inherit;font-size:16px;border:1px solid #d8bdb4;border-radius:10px;padding:10px;color:var(--ink)}
+.editrow{border:1px solid var(--line);border-radius:12px;margin:7px 0;background:#fff}
+.editrow summary{padding:10px 12px;font-weight:800;cursor:pointer;font-size:15px;list-style-position:inside}
+.editform{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px 12px 12px}
+.editform label{font-size:11px;font-weight:800;color:var(--muted);display:flex;flex-direction:column;gap:4px;min-width:0}
+.editform input{min-width:0;font:inherit;font-size:16px;border:1px solid #d8bdb4;border-radius:10px;padding:8px 10px;color:var(--ink)}
+#editList{margin:8px 0}
+#editStatus{min-height:18px;font-size:12.5px;font-weight:800;color:var(--red);margin:8px 0;line-height:1.6}
+.io-note{font-size:11px}
+#ioText{width:100%;font-family:ui-monospace,Consolas,'Courier New',monospace;font-size:16px;border:1px solid #d8bdb4;border-radius:10px;padding:8px;color:var(--ink);margin:8px 0;resize:vertical}
+@media(display-mode:standalone){.shell{padding-top:max(20px,env(safe-area-inset-top))}}
+@media(max-width:420px){.choices button{font-size:34px}.hero p{font-size:13px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><div class="shell">
+<header class="top"><a class="back" href="../../" title="返去學習花園">‹ 學習花園</a><button class="ghost" id="parentBtn">家長角 Parent ↗</button></header>
+
+<section class="hero">
+<div><div class="tiny">Character garden · 認字樂園</div><h1 id="appTitle">認字樂園 🌸</h1><p id="greeting">Hi Trinity! 認一認、讀一讀、配一配。</p></div>
+<div class="badge" id="badge">✦ 0</div>
+</section>
+
+<nav class="modes" aria-label="Activities">
+<button data-mode="learn" class="active">🌱 學一學</button>
+<button data-mode="quiz">✦ 玩遊戲</button>
+<button data-mode="match">❀ 配一配</button>
+</nav>
+
+<section class="card" aria-label="Choose a character set">
+<div class="pickhead"><h3 id="pickLabel">揀一組字 · Choose a set</h3><span class="tiny" id="pickHint"></span></div>
+<div class="sets" id="sets"></div>
+</section>
+
+<section class="card stage" id="stage" aria-label="Learning activity"></section>
+
+<footer class="foot"><span id="footName">Made for Trinity, with room to grow.</span><span>廣東話 · 認字 · No rush, no timers</span></footer>
+</div>
+
+<dialog id="parent">
+<h2 id="pTitle">Trinity’s learning, at a glance</h2>
+<form id="nameForm">
+<label for="studentName"><strong>Student name · 學生姓名</strong></label>
+<div class="name-controls"><input id="studentName" name="studentName" maxlength="30" required autocomplete="off" placeholder="e.g. Trinity / 欣欣"><button class="primary" type="submit">Save name</button></div>
+<p id="nameStatus" role="status" aria-live="polite"></p>
+</form>
+<p>Progress saves in this browser on this device. A「識咗」(confident) character has three correct, unassisted answers in its latest three tries — the same rule as 九因歌. This is a practice signal, not a formal assessment.</p>
+<div class="stats" id="stats"></div>
+<h3>要多啲練習 · Needs more practice</h3>
+<div class="facts" id="tricky"></div>
+<details id="editorBox">
+<summary>✎ 編輯字卡 · Edit cards</summary>
+<p class="ednote">喺呢度即時改字卡內容：每張卡有<b>字、Jyutping、英文、emoji、例詞</b>，可以加卡、刪卡、開新組。淨係輸入個字，AI 會自動幫你填埋其餘欄位（撳 ✨ 可以重新填）；修改只會儲存喺呢部裝置嘅瀏覽器 — 用 Export / Import 複製去另一部裝置，或者改返 HTML 檔先可以永久更新所有裝置。Type a character and AI fills in the rest (✨ to refill); edits save on this device only — use Export/Import to move them.</p>
+<div class="edit-controls"><select id="editSet" aria-label="揀組別 · Choose a set to edit"></select><button class="secondary" id="newSetBtn" type="button">＋ 新一組</button></div>
+<div class="edit-setrow"><input id="editSetName" maxlength="16" aria-label="組名 · Set name" placeholder="組名"><input id="editSetIcon" maxlength="8" aria-label="組 emoji · Set emoji" placeholder="emoji"><button class="danger" id="delSetBtn" type="button">刪除這組</button></div>
+<div id="editList"></div>
+<button class="secondary" id="addCharBtn" type="button">＋ 加字 · Add character</button>
+<p id="editStatus" role="status" aria-live="polite"></p>
+<textarea id="ioText" rows="5" placeholder="Export puts the whole deck here as JSON · 貼上 JSON 再撳 Import"></textarea>
+<div class="name-controls"><button class="secondary" id="exportBtn" type="button">Export</button><button class="secondary" id="importBtn" type="button">Import</button><button class="danger" id="resetSetsBtn" type="button">回復預設 · Reset</button></div>
+</details>
+<p><strong>Cantonese audio:</strong> playback uses an installed 廣東話 voice (zh-HK) when available. Without one, every game still works — just read the characters together.</p>
+<p id="storageNote"></p>
+<div class="name-controls"><button class="danger" id="clearBtn" type="button">清除進度 · Clear progress</button><button class="primary" id="closeParent" type="button">返去玩 · Back</button></div>
+</dialog>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const NOSTORAGE=/[?&]nostorage=1/.test(location.search); // test hook: simulates blocked storage
+// [character, jyutping, english, emoji, example word]
+const BUILTIN_SETS=[
+{id:'numbers',zh:'數字',ic:'🔢',c:[['一','jat1','one','1️⃣','一起'],['二','ji6','two','2️⃣','第二'],['三','saam1','three','3️⃣','三角'],['四','sei3','four','4️⃣','四季'],['五','ng5','five','5️⃣','五十'],['六','luk6','six','6️⃣','六一'],['七','cat1','seven','7️⃣','七彩'],['八','baat3','eight','8️⃣','八月'],['九','gau2','nine','9️⃣','九龍'],['十','sap6','ten','🔟','十分'],['百','baak3','hundred','💯','一百'],['零','ling4','zero','🍭','零食']]},
+{id:'family',zh:'家人',ic:'👨‍👩‍👧',c:[['爸','baa1','dad','👨','爸爸'],['媽','maa1','mum','👩','媽媽'],['爺','je4','grandpa (dad’s side)','👴','爺爺'],['嫲','naa4','grandma (dad’s side)','👵','嫲嫲'],['兄','hing1','big brother','👦','兄弟'],['弟','dai6','little brother','🧒','弟弟'],['姐','ze2','big sister','👧','姐姐'],['妹','mui6','little sister','👶','妹妹'],['家','gaa1','home','🏠','家人'],['人','jan4','person','🧑','大人'],['朋','pang4','friend','👭','朋友'],['友','jau5','friend','🤝','友善']]},
+{id:'body',zh:'身體',ic:'💪',c:[['頭','tau4','head','👤','枕頭'],['眼','ngaan5','eye','👁️','眼鏡'],['耳','ji5','ear','👂','耳機'],['口','hau2','mouth','👄','口罩'],['鼻','bei6','nose','👃','鼻哥'],['手','sau2','hand','✋','手機'],['腳','goek3','foot','🦶','腳趾'],['牙','ngaa4','tooth','🦷','刷牙'],['髮','faat3','hair','💇','頭髮'],['面','min6','face','😊','洗面'],['心','sam1','heart','❤️','開心'],['身','san1','body','🧍','身體']]},
+{id:'nature',zh:'大自然',ic:'🌏',c:[['山','saan1','mountain','⛰️','火山'],['水','seoi2','water','💧','水果'],['火','fo2','fire','🔥','火車'],['天','tin1','sky','🌤️','天氣'],['日','jat6','sun / day','☀️','生日'],['月','jyut6','moon / month','🌙','月餅'],['星','sing1','star','⭐','星星'],['雲','wan4','cloud','☁️','白雲'],['風','fung1','wind','🌬️','大風'],['雨','jyu5','rain','🌧️','落雨'],['花','faa1','flower','🌸','花園'],['草','cou2','grass','🌿','草地']]},
+{id:'food',zh:'食物',ic:'🍽️',c:[['飯','faan6','rice / meal','🍚','食飯'],['麵','min6','noodles','🍜','公仔麵'],['包','baau1','bun / bread','🍞','麵包'],['蛋','daan2','egg','🥚','蛋糕'],['奶','naai5','milk','🥛','奶茶'],['茶','caa4','tea','🍵','飲茶'],['肉','juk6','meat','🥩','牛肉'],['菜','coi3','vegetable','🥬','菜心'],['米','mai5','rice grain','🌾','米粉'],['果','gwo2','fruit','🍎','蘋果'],['餅','beng2','biscuit','🍪','餅乾'],['糖','tong2','candy','🍬','糖果']]},
+{id:'colours',zh:'顏色',ic:'🎨',c:[['紅','hung4','red','🔴','紅燈'],['橙','caang2','orange','🟠','橙汁'],['黃','wong4','yellow','🟡','蛋黃'],['綠','luk6','green','🟢','綠燈'],['藍','laam4','blue','🔵','藍天'],['紫','zi2','purple','🟣','紫菜'],['黑','hak1','black','⚫','黑板'],['白','baak6','white','⚪','白飯']]},
+{id:'animals',zh:'動物',ic:'🐾',c:[['貓','maau1','cat','🐱','小貓'],['狗','gau2','dog','🐶','小狗'],['鳥','niu5','bird','🐦','小鳥'],['魚','jyu2','fish','🐟','魚蛋'],['馬','maa5','horse','🐴','馬路'],['牛','ngau4','cow','🐮','牛奶'],['羊','joeng4','sheep','🐑','山羊'],['豬','zyu1','pig','🐷','豬肉'],['雞','gai1','chicken','🐔','炸雞'],['鴨','aap3','duck','🦆','小鴨'],['龜','gwai1','turtle','🐢','烏龜'],['蟲','cung4','bug','🐛','毛毛蟲']]}
+];
+// Parent edits (編輯字卡) live under their own key, separate from progress, so a
+// corrupt progress record can never wipe a customised deck.
+const SETS_KEY='trinity-recognise-sets-v1';
+function cloneSets(a){return a.map(s=>({id:String(s.id),zh:String(s.zh),ic:String(s.ic),c:s.c.map(e=>[String(e[0]).slice(0,4),String(e[1]).slice(0,24),String(e[2]).slice(0,48),String(e[3]).slice(0,8),String(e[4]).slice(0,24)])}))}
+function validSets(v){
+  if(!v||!Array.isArray(v.sets)||!v.sets.length)return null;
+  const out=[],ids=new Set();
+  for(const s of v.sets){
+    if(!s||typeof s.id!=='string'||!s.id||ids.has(s.id))return null;
+    if(typeof s.zh!=='string'||typeof s.ic!=='string'||!Array.isArray(s.c)||!s.c.length)return null;
+    const rows=[];
+    for(const e of s.c){
+      if(!Array.isArray(e)||e.length<5||typeof e[0]!=='string'||!e[0].trim())return null;
+      rows.push([e[0].trim().slice(0,4),String(e[1]||'').slice(0,24),String(e[2]||'').slice(0,48),String(e[3]||'').slice(0,8),String(e[4]||'').slice(0,24)]);
+    }
+    ids.add(s.id);out.push({id:s.id.slice(0,24),zh:s.zh.slice(0,16),ic:s.ic.slice(0,8),c:rows});
+  }
+  return out;
+}
+let SETS;
+if(NOSTORAGE)SETS=cloneSets(BUILTIN_SETS);
+else try{SETS=validSets(JSON.parse(localStorage.getItem(SETS_KEY)))||cloneSets(BUILTIN_SETS)}catch(e){SETS=cloneSets(BUILTIN_SETS)}
+const ALL='all';let TOTAL=SETS.reduce((n,s)=>n+s.c.length,0);
+function recalcTotal(){TOTAL=SETS.reduce((n,s)=>n+s.c.length,0)}
+const CH2SET={};
+function rebuildChMap(){for(const k in CH2SET)delete CH2SET[k];SETS.forEach(s=>s.c.forEach(e=>CH2SET[e[0]]=s.id))}
+rebuildChMap();
+
+// ---- storage (own key; every read/write guarded) ----
+const KEY='trinity-recognise-v1';
+let saved={studentName:'',stars:0,setStars:{},chars:{}},storageOK=true;
+function lsGet(){if(NOSTORAGE)throw new Error('storage disabled (test)');return localStorage.getItem(KEY)}
+function lsSet(v){if(NOSTORAGE)throw new Error('storage disabled (test)');localStorage.setItem(KEY,v)}
+try{
+  const v=JSON.parse(lsGet());
+  if(v&&typeof v==='object'){
+    if(Number.isFinite(v.stars)&&v.stars>=0)saved.stars=v.stars|0;
+    if(typeof v.studentName==='string')saved.studentName=v.studentName.slice(0,30);
+    if(v.setStars&&typeof v.setStars==='object')for(const k in v.setStars)if(Number.isFinite(v.setStars[k]))saved.setStars[k]=v.setStars[k]|0;
+    if(v.chars&&typeof v.chars==='object')for(const k in v.chars){const c=v.chars[k];if(c&&typeof c==='object'&&Array.isArray(c.recent))saved.chars[k]={correct:c.correct|0,wrong:c.wrong|0,recent:c.recent.slice(-3).map(Boolean)}}
+  }
+}catch(e){storageOK=false}
+function save(){try{lsSet(JSON.stringify(saved))}catch(e){storageOK=false}renderProgress()}
+function studentName(){
+  if(saved.studentName.trim())return saved.studentName.trim();
+  if(!NOSTORAGE){try{const g=JSON.parse(localStorage.getItem('trinity-garden-v1'));if(g&&typeof g.studentName==='string'&&g.studentName.trim())return g.studentName.trim().slice(0,30)}catch(e){}}
+  return 'Trinity';
+}
+
+// ---- Cantonese speech (zh-HK / yue voice, graceful without one) ----
+const synth='speechSynthesis' in window?window.speechSynthesis:null;
+let voices=[];
+function refreshVoices(){
+  voices=synth?synth.getVoices().filter(v=>/^(yue|zh[-_]HK)/i.test(v.lang)):[];
+  const note=voices.length?'♫ Cantonese voice ready · 廣東話朗讀':'Cantonese voice unavailable on this device — read together! 廣東話語音未能使用，一齊讀喇！';
+  document.querySelectorAll('.voice-note').forEach(el=>el.textContent=note);
+}
+if(synth)synth.addEventListener('voiceschanged',refreshVoices);
+function speak(text){
+  if(!synth||!voices.length)return false;
+  try{synth.cancel();const u=new SpeechSynthesisUtterance(text);u.voice=voices[0];u.lang=voices[0].lang;u.rate=.75;synth.speak(u);return true}catch(e){return false}
+}
+
+// ---- helpers ----
+function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function setChars(sid){return sid===ALL?SETS.flatMap(s=>s.c):SETS.find(s=>s.id===sid).c}
+function known(f){return !!f&&f.recent.length===3&&f.recent.every(Boolean)}
+function knownCount(sid){return setChars(sid).filter(e=>known(saved.chars[e[0]])).length}
+function noteWrong(ch){const f=saved.chars[ch]||{correct:0,wrong:0,recent:[]};f.wrong++;f.recent=[...f.recent,false].slice(-3);saved.chars[ch]=f}
+function noteCorrect(ch,clean){const f=saved.chars[ch]||{correct:0,wrong:0,recent:[]};f.correct++;f.recent=[...f.recent,clean].slice(-3);saved.chars[ch]=f}
+function awardStar(ch){saved.stars++;const sid=CH2SET[ch];saved.setStars[sid]=(saved.setStars[sid]|0)+1}
+
+// ---- state ----
+let mode='learn',setId='numbers',learnIdx=0;
+if(!SETS.some(s=>s.id===setId))setId=SETS[0].id;
+let quizQs=[],qi=0,quizStars=0,missed=false,answered=false;
+let matchTiles=[],matchStars=0,flipped=[],lockBoard=false;
+const stage=$('stage');
+
+function renderProgress(){
+  const flowers=Math.floor(saved.stars/5);
+  $('badge').textContent='✦ '+saved.stars+(flowers?' · 🌼 '+flowers:'');
+  document.querySelectorAll('.set').forEach(btn=>{
+    const sid=btn.dataset.set;
+    if(sid===ALL){btn.querySelector('.meta').textContent='✦ '+saved.stars+' · 識咗 '+knownCount(ALL)+'/'+TOTAL;return}
+    const s=SETS.find(x=>x.id===sid);
+    btn.querySelector('.meta').textContent='✦ '+(saved.setStars[sid]|0)+' · 識咗 '+knownCount(sid)+'/'+s.c.length;
+  });
+  $('pickHint').textContent=setId===ALL?'全部 · All '+TOTAL+' characters':'識咗 '+knownCount(setId)+'/'+setChars(setId).length;
+}
+function renderSets(){
+  $('sets').replaceChildren();
+  const mk=(sid,ic,nm)=>{
+    const b=el('button','set');b.dataset.set=sid;b.setAttribute('aria-pressed',sid===setId);
+    b.append(el('span','ic',ic),el('span','nm',nm),el('span','meta',''));
+    b.classList.toggle('selected',sid===setId);
+    b.onclick=()=>{setId=sid;learnIdx=0;buildRound();renderSets();renderStage();renderProgress()};
+    $('sets').append(b);
+  };
+  SETS.forEach(s=>mk(s.id,s.ic,s.zh));
+  mk(ALL,'🌱',mode==='learn'?'全部':'混合');
+  $('pickLabel').textContent=mode==='learn'?'揀一組字 · Choose a set':'揀一組字（或者混合）· Pick a set';
+}
+
+// ---- learn mode ----
+function renderLearn(){
+  const cards=setChars(setId);
+  if(learnIdx>=cards.length)learnIdx=0;
+  const [ch,jy,en,em,word]=cards[learnIdx];
+  const top=el('div','stage-top');
+  top.append(el('span','pill','🌱 學一學 · Flashcards'),el('span',null,(learnIdx+1)+' / '+cards.length));
+  const flash=el('button','flash');flash.setAttribute('aria-label',ch+' · tap to hear');
+  const fe=el('div',null,'');fe.style.fontSize='30px';fe.textContent=em;
+  flash.append(el('span','glyph',ch),fe,el('span','jyut',jy),el('span','enmean',en));
+  flash.onclick=()=>speak(ch);
+  const wordrow=el('div','wordrow');
+  wordrow.append(el('span','lbl','例詞'),el('span',null,word));
+  const sayWord=el('button',null,'🔊');sayWord.setAttribute('aria-label','讀例詞 '+word);sayWord.onclick=()=>speak(word);
+  wordrow.append(sayWord);
+  const actions=el('div','actions');
+  const prev=el('button','secondary','◀ 上一個'),next=el('button','primary','下一個 ▶');
+  const step=d=>{learnIdx=(learnIdx+d+cards.length)%cards.length;renderStage();speak(cards[learnIdx][0])};
+  prev.onclick=()=>step(-1);next.onclick=()=>step(1);
+  const say=el('button','secondary','🔊 讀一讀');say.onclick=()=>speak(ch);
+  actions.append(prev,say,next);
+  stage.replaceChildren(top,flash,wordrow,actions,el('p','voice-note',''));
+  refreshVoices();
+}
+
+// ---- quiz mode ----
+function sampleWeighted(pool,n){
+  const bag=[];
+  pool.forEach(e=>{const f=saved.chars[e[0]];const w=!f?4:(known(f)?1:3);for(let i=0;i<w;i++)bag.push(e)});
+  shuffle(bag);
+  const out=[],seen=new Set();
+  for(const e of bag){if(!seen.has(e[0])){seen.add(e[0]);out.push(e);if(out.length===n)break}}
+  while(out.length<pool.length&&out.length<n){const e=pool[Math.floor(Math.random()*pool.length)];if(!seen.has(e[0])){seen.add(e[0]);out.push(e)}}
+  return out;
+}
+function buildQuiz(){quizQs=sampleWeighted(setChars(setId),8);qi=0;quizStars=0}
+function renderQuiz(){
+  if(qi>=quizQs.length){renderSummary('🎉','玩完喇！','今次攞到 '+quizStars+' 粒星','再玩一次','quiz');return}
+  missed=false;answered=false;
+  const [ch,jy,en,em,word]=quizQs[qi];
+  const listen=Math.random()<.5&&voices.length>0;
+  const top=el('div','stage-top');
+  top.append(el('span','pill','✦ 玩遊戲 · Quiz'),el('span',null,'第 '+(qi+1)+' / '+quizQs.length+' 題'));
+  const prompt=el('div','prompt');
+  if(listen){
+    const big=el('button','speakBig','🔊');big.setAttribute('aria-label','再聽一次');
+    big.onclick=()=>speak(ch);
+    prompt.append(big,el('span','pEn','聽一聽，揀啱個字 · Listen and pick'));
+    speak(ch);
+  }else{
+    prompt.append(el('div','pEmoji',em),el('span','pEn',en));
+  }
+  const choices=el('div','choices');choices.id='choices';
+  const sameSet=setChars(setId).map(e=>e[0]).filter(x=>x!==ch);
+  shuffle(sameSet);
+  const opts=shuffle([ch,...sameSet.slice(0,3)]);
+  opts.forEach(o=>{
+    const b=el('button',null,o);b.setAttribute('aria-label','揀 '+o);
+    b.onclick=()=>answerQuiz(b,o,ch,word);
+    choices.append(b);
+  });
+  const fb=el('div','feedback');fb.id='feedback';fb.setAttribute('role','status');fb.setAttribute('aria-live','polite');
+  stage.replaceChildren(top,prompt,choices,fb,el('p','voice-note',''));
+  refreshVoices();
+}
+function answerQuiz(btn,pick,ch,word){
+  if(answered)return;
+  if(pick!==ch){
+    noteWrong(ch);save();
+    missed=true;
+    btn.classList.add('dim');btn.disabled=true;
+    const fb=$('feedback');fb.classList.remove('ok');fb.textContent='差少少！再試一次 ♡';
+    return;
+  }
+  answered=true;
+  noteCorrect(ch,!missed);awardStar(ch);quizStars++;save();
+  const fb=$('feedback');fb.classList.add('ok');
+  fb.textContent=['答啱喇！✦','好叻呀！🎉','太棒喇！🌟','冇錯！👏'][Math.floor(Math.random()*4)];
+  document.querySelectorAll('#choices button').forEach(b=>{b.disabled=true;if(b.textContent===ch)b.classList.add('good')});
+  const row=el('div','wordrow');row.style.marginTop='12px';
+  row.append(el('span','lbl',ch+' · 例詞'),el('span',null,word));
+  const sayWord=el('button',null,'🔊');sayWord.onclick=()=>speak(word);row.append(sayWord);
+  const actions=el('div','actions');
+  const next=el('button','primary',qi+1>=quizQs.length?'睇成績 →':'下一題 →');
+  next.onclick=()=>{qi++;renderQuiz()};
+  actions.append(next);
+  speak(ch);
+  stage.append(row,actions);
+}
+
+// ---- match mode ----
+function buildMatch(){
+  const picks=sampleWeighted(setChars(setId),4);
+  matchTiles=[];
+  picks.forEach(([ch,,en,em])=>{matchTiles.push({ch,kind:'c',face:ch},{ch,kind:'e',face:em})});
+  shuffle(matchTiles);
+  matchStars=0;flipped=[];lockBoard=false;
+}
+function renderMatch(){
+  const top=el('div','stage-top');
+  top.append(el('span','pill','❀ 配一配 · Match'),el('span',null,'配對 0 / 4'));
+  top.id='matchTop';
+  const board=el('div','board');
+  matchTiles.forEach((t,i)=>{
+    const b=el('button','tile');b.dataset.i=i;b.setAttribute('aria-label','蓋住的卡片');
+    const inn=el('div','in');
+    const front=el('div','f front','字'),back=el('div','f back'+(t.kind==='c'?' c':''),t.face);
+    inn.append(front,back);b.append(inn);
+    b.onclick=()=>flipTile(b,t);
+    board.append(b);
+  });
+  const fb=el('div','feedback');fb.id='feedback';fb.setAttribute('role','status');fb.setAttribute('aria-live','polite');
+  stage.replaceChildren(top,board,fb,el('p','voice-note',''));
+  refreshVoices();
+}
+function matchDone(){return matchTiles.every(t=>t.done)}
+function updateMatchTop(){
+  const n=matchTiles.filter(t=>t.done).length/2;
+  const span=$('matchTop').lastElementChild;
+  if(span)span.textContent='配對 '+n+' / '+(matchTiles.length/2);
+}
+function flipTile(btn,t){
+  if(lockBoard||t.done||t.open)return;
+  t.open=true;btn.classList.add('flipped');
+  btn.setAttribute('aria-label',t.face);
+  flipped.push({btn,t});
+  if(flipped.length<2)return;
+  const [a,b]=flipped;flipped=[];lockBoard=true;
+  if(a.t.ch===b.t.ch&&a.t.kind!==b.t.kind){
+    const clean=!(a.t.miss||b.t.miss);
+    [a,b].forEach(x=>{x.t.done=true;x.btn.classList.add('matched');x.btn.disabled=true});
+    noteCorrect(a.t.ch,clean);awardStar(a.t.ch);matchStars++;save();
+    speak(a.t.ch);
+    const fb=$('feedback');fb.classList.add('ok');
+    const word=(setChars(CH2SET[a.t.ch]).find(e=>e[0]===a.t.ch)||[,,,,a.t.ch+''])[4];
+    fb.textContent='配對成功！'+a.t.ch+' · '+word+' ✦';
+    updateMatchTop();
+    lockBoard=false;
+    if(matchDone())setTimeout(()=>renderSummary('🌸','全部配對成功！','攞到 '+matchStars+' 粒星','再玩一次','match'),650);
+  }else{
+    // mismatch: any tile that has seen a wrong pair is no longer "clean" for scoring
+    [a,b].forEach(x=>{x.t.miss=true});
+    const fb=$('feedback');fb.classList.remove('ok');fb.textContent='未配到，再試一次 ♡';
+    setTimeout(()=>{[a,b].forEach(x=>{x.t.open=false;x.btn.classList.remove('flipped');x.btn.setAttribute('aria-label','蓋住的卡片')});lockBoard=false},750);
+  }
+}
+function renderSummary(bigEmoji,h1,line,againLabel,from){
+  const wrap=el('div','summary');
+  wrap.append(el('div','big',bigEmoji),el('h2',null,h1),el('p',null,line));
+  wrap.append(el('p',null,'總共 ✦ '+saved.stars+' · 識咗 '+knownCount(ALL)+' / '+TOTAL+' 個字'));
+  const actions=el('div','actions');actions.style.marginTop='14px';
+  const again=el('button','primary','🔁 '+againLabel);
+  again.onclick=()=>{buildRound();renderStage()};
+  const learn=el('button','secondary','🌱 學一學');
+  learn.onclick=()=>{mode='learn';syncModes();renderSets();renderStage()};
+  actions.append(again,learn);
+  wrap.append(actions,el('p','hintline','可以喺上面揀另一組字 · Pick another set above'));
+  stage.replaceChildren(wrap);
+}
+
+// ---- routing ----
+function buildRound(){if(mode==='quiz')buildQuiz();else if(mode==='match')buildMatch()}
+function renderStage(){
+  if(synth)synth.cancel();
+  if(mode==='learn')renderLearn();else if(mode==='quiz')renderQuiz();else renderMatch();
+  renderProgress();
+}
+function syncModes(){document.querySelectorAll('.modes button').forEach(b=>{b.classList.toggle('active',b.dataset.mode===mode);b.setAttribute('aria-pressed',b.dataset.mode===mode)})}
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;learnIdx=0;syncModes();buildRound();renderSets();renderStage()});
+
+// ---- parent corner ----
+function openParent(){
+  $('studentName').value=studentName();$('nameStatus').textContent='';
+  const tried=Object.keys(saved.chars).length,conf=knownCount(ALL);
+  $('stats').replaceChildren();
+  [['✦ Stars earned',saved.stars],['Characters tried',tried+' / '+TOTAL],['識咗 Confident',conf]].forEach(([label,val])=>{
+    const d=el('div','stat');const s=el('strong',null,String(val));d.append(s,document.createTextNode(label));$('stats').append(d);
+  });
+  $('tricky').replaceChildren();
+  const tricky=Object.entries(saved.chars).filter(([ch,f])=>CH2SET[ch]&&f.wrong>0).sort((x,y)=>y[1].wrong-x[1].wrong).slice(0,12);
+  if(!tricky.length)$('tricky').append(document.createTextNode('No tricky characters yet. Try a few rounds together.'));
+  tricky.forEach(([ch,f])=>{const s=el('span','fact',ch);s.append(el('small',null,' ✕'+f.wrong));$('tricky').append(s)});
+  $('storageNote').textContent=storageOK?'Progress saves automatically in this browser. Clearing browser data also clears it. Add ?nostorage=1 to the address to preview the no-storage experience.':'Browser storage is unavailable, so progress only lasts for this visit. Everything else works normally.';
+  openEditor();
+  $('parent').showModal();
+}
+$('parentBtn').onclick=openParent;
+$('closeParent').onclick=()=>$('parent').close();
+$('nameForm').onsubmit=event=>{
+  event.preventDefault();
+  const input=$('studentName'),name=input.value.trim();
+  if(!name){input.setCustomValidity('Please enter a student name. 請輸入學生姓名。');input.reportValidity();return}
+  saved.studentName=name.slice(0,30);save();renderName();
+  input.value=studentName();
+  $('nameStatus').textContent=storageOK?'Name saved — this garden is now personalised for '+studentName()+'.':'Name updated for this visit. Browser storage is unavailable.';
+};
+$('studentName').oninput=()=>$('studentName').setCustomValidity('');
+$('clearBtn').onclick=()=>{
+  if(!confirm('清除認字樂園嘅進度？星星會歸零。 Clear this app’s stars and progress?'))return;
+  saved={studentName:saved.studentName,stars:0,setStars:{},chars:{}};
+  save();learnIdx=0;buildRound();renderStage();
+  $('nameStatus').textContent='Progress cleared. A fresh start! 進度已清除。';
+};
+
+// ---- card editor (家長角 → 編輯字卡) ----
+function deb(fn){let t;return function(){clearTimeout(t);const a=arguments;t=setTimeout(()=>fn.apply(null,a),450)}}
+const AI_OK=/^https?:$/.test(location.protocol); // /api/ai is added server-side by Caddy on the hosted site only
+const aiCache=new Map();
+function parseAiCard(text){
+  if(typeof text!=='string')return null;
+  const m=text.match(/\{[\s\S]*\}/);
+  if(!m)return null;
+  let v;
+  try{v=JSON.parse(m[0])}catch(e){return null}
+  const g=k=>typeof v[k]==='string'?v[k].trim():'';
+  const out={jyutping:g('jyutping').slice(0,24),english:g('english').slice(0,48),emoji:g('emoji').slice(0,8),word:g('word').slice(0,24)};
+  return (out.jyutping||out.english||out.emoji||out.word)?out:null;
+}
+async function aiFill(row,inputs,btn,syncSum){
+  const ch=row[0];
+  btn.disabled=true;btn.textContent='⏳ AI 想緊…';
+  try{
+    let card=aiCache.get(ch);
+    if(!card){
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),12000);
+      const body=JSON.stringify({
+        model:'kimi-k2.6',
+        messages:[
+          {role:'system',content:'You fill in Chinese learning flashcards for a 6-year-old child in Hong Kong. Reply with ONLY a JSON object - no markdown fences, no extra text.'},
+          {role:'user',content:'Card: '+ch+'\nReturn JSON exactly shaped like {"jyutping":"sai1","english":"west","emoji":"🌇","word":"西瓜"}\n- jyutping: Jyutping romanisation with tone numbers\n- english: very simple English meaning for a young child (1-2 words)\n- emoji: one single emoji matching the meaning\n- word: one common 2-character Traditional Chinese word (Hong Kong usage) containing '+ch}
+        ],
+        thinking:{type:'disabled'}
+      });
+      const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body});
+      clearTimeout(timer);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const data=await r.json();
+      card=parseAiCard(data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content);
+      if(!card)throw new Error('bad shape');
+      aiCache.set(ch,card);
+    }
+    btn.disabled=false;btn.textContent='✨ AI 幫手填 · AI fill';
+    if(row[0]!==ch)return; // parent edited the character again meanwhile; skip
+    if(card.jyutping)row[1]=card.jyutping;
+    if(card.english)row[2]=card.english;
+    if(card.emoji)row[3]=card.emoji;
+    if(card.word)row[4]=card.word;
+    for(let k=1;k<5;k++)inputs[k].value=row[k];
+    syncSum();commitSets(false);
+    $('editStatus').textContent='✨ AI 填好「'+ch+'」— 記得檢查下先畀小朋友玩 · AI filled it in — please double-check.';
+  }catch(e){
+    btn.disabled=false;btn.textContent='✨ AI 幫手填 · AI fill';
+    $('editStatus').textContent='✋ AI 填唔到（呢個網站未開通 AI，或者暫時連唔上）— 自己填完全一樣得 · AI fill is not available here — filling it in by hand works exactly the same.';
+  }
+}
+let editSetId=SETS[0]&&SETS[0].id;
+function syncEditorSelect(){
+  const sel=$('editSet'),s=SETS.find(x=>x.id===editSetId);
+  const opt=[].slice.call(sel.options).find(o=>o.value===editSetId);
+  if(s&&opt)opt.textContent=s.ic+' '+s.zh+' · '+s.c.length+' 字';
+}
+function openEditor(){
+  const sel=$('editSet');sel.replaceChildren();
+  SETS.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.ic+' '+s.zh+' · '+s.c.length+' 字';sel.append(o)});
+  if(!SETS.some(x=>x.id===editSetId))editSetId=SETS[0].id;
+  sel.value=editSetId;
+  $('editStatus').textContent='';$('ioText').value='';
+  renderEditSet();
+}
+function renderEditSet(){
+  const s=SETS.find(x=>x.id===editSetId);if(!s)return;
+  $('editSetName').value=s.zh;$('editSetIcon').value=s.ic;
+  const list=$('editList');list.replaceChildren();
+  s.c.forEach((row,i)=>list.append(editRow(s,row,i)));
+}
+function editRow(s,row,i){
+  const d=el('details','editrow');
+  const sum=el('summary',null,'');
+  const syncSum=()=>{sum.textContent=(row[3]||'🔘')+' '+row[0]+' · '+(row[1]||'—')+' — '+(row[2]||'(no English)')};
+  syncSum();
+  d.append(sum);
+  const form=el('div','editform');
+  const inputs=[];
+  [['字 Character',0,4],['Jyutping',1,24],['English',2,48],['Emoji',3,8],['例詞 Word',4,24]].forEach(([lbl,fi,max])=>{
+    const label=el('label',null,lbl);
+    const inp=document.createElement('input');inp.value=row[fi];inp.maxLength=max;
+    inputs[fi]=inp;
+    inp.oninput=deb(()=>{
+      const v=inp.value.trim();
+      if(fi===0&&!v){$('editStatus').textContent='字唔可以空 · the character itself cannot be empty.';inp.value=row[0];return}
+      row[fi]=v;syncSum();
+      let dup=false;SETS.forEach(x=>x.c.forEach(e=>{if(e!==row&&e[0]===row[0])dup=true}));
+      commitSets(false);
+      $('editStatus').textContent=(dup?'留意：「'+row[0]+'」喺另一張卡都有 · duplicate character. ':'已儲存 ✓ saved. ')+row[0]+' · '+(row[1]||'')+' · '+(row[2]||'');
+      if(fi===0&&AI_OK&&!row[1]&&!row[2]&&!row[3]&&!row[4])aiFill(row,inputs,aiBtn,syncSum);
+    });
+    label.append(inp);form.append(label);
+  });
+  const del=el('button','danger','刪除卡 ✕');del.type='button';
+  del.onclick=()=>{
+    if(!confirm('刪除「'+row[0]+'」這張字卡？Delete this card?'))return;
+    s.c.splice(i,1);
+    if(!s.c.length)s.c.push(['？','','','','']);
+    commitSets(true);renderEditSet();
+    $('editStatus').textContent='刪除咗「'+row[0]+'」· card deleted.';
+  };
+  form.append(del);
+  let aiBtn=null;
+  if(AI_OK){
+    aiBtn=el('button','secondary','✨ AI 幫手填 · AI fill');aiBtn.type='button';aiBtn.style.gridColumn='1 / -1';
+    aiBtn.onclick=()=>aiFill(row,inputs,aiBtn,syncSum);
+    form.append(aiBtn);
+  }
+  d.append(form);
+  return d;
+}
+function commitSets(structural,persist){
+  rebuildChMap();recalcTotal();
+  if(persist!==false&&!NOSTORAGE){try{localStorage.setItem(SETS_KEY,JSON.stringify({v:1,sets:SETS}))}catch(e){storageOK=false}}
+  renderSets();renderProgress();
+  if(structural)buildRound();
+  renderStage();
+  syncEditorSelect();
+}
+$('editSet').onchange=()=>{editSetId=$('editSet').value;renderEditSet()};
+$('editSetName').oninput=deb(()=>{
+  const s=SETS.find(x=>x.id===editSetId);if(!s)return;
+  const v=$('editSetName').value.trim();
+  if(!v){$('editSetName').value=s.zh;return}
+  s.zh=v.slice(0,16);commitSets(false);
+});
+$('editSetIcon').oninput=deb(()=>{
+  const s=SETS.find(x=>x.id===editSetId);if(!s)return;
+  s.ic=($('editSetIcon').value.trim()||'✨').slice(0,8);commitSets(false);
+});
+$('addCharBtn').onclick=()=>{
+  const s=SETS.find(x=>x.id===editSetId);if(!s)return;
+  s.c.push(['？','','','','']);
+  commitSets(true);renderEditSet();
+  $('editStatus').textContent='加咗新卡「？」— 攤開佢嚟改 · new card added, open it to edit.';
+};
+$('newSetBtn').onclick=()=>{
+  const id='s'+Date.now().toString(36);
+  SETS.push({id,zh:'新組',ic:'✨',c:[['？','','','','']]});
+  editSetId=id;commitSets(true);openEditor();
+  $('editStatus').textContent='新組開好喇 — 改個名啦 · new set created, rename it above.';
+};
+$('delSetBtn').onclick=()=>{
+  const s=SETS.find(x=>x.id===editSetId);if(!s)return;
+  if(!confirm('刪除成組「'+s.zh+'」？這組嘅星星會留喺紀錄，但唔會再顯示。Delete this whole set?'))return;
+  SETS=SETS.filter(x=>x.id!==s.id);
+  if(!SETS.length)SETS=cloneSets(BUILTIN_SETS);
+  if(!SETS.some(x=>x.id===setId))setId=SETS[0].id;
+  editSetId=SETS[0].id;
+  commitSets(true);openEditor();
+  $('editStatus').textContent='刪除咗「'+s.zh+'」· set deleted.';
+};
+$('exportBtn').onclick=()=>{
+  const t=$('ioText');t.value=JSON.stringify({v:1,sets:SETS});
+  const say=ok=>{$('editStatus').textContent=ok?'已複製 ✓ copied — 喺另一部裝置開家長角 → 編輯字卡 → Import 貼上。 Paste it into Import on the other device.':'JSON 已放喺下面格仔 — 手動全選複製。 Exported below — copy it manually.'};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t.value).then(()=>say(true),()=>say(false));
+  else say(false);
+};
+$('importBtn').onclick=()=>{
+  let v;
+  try{v=JSON.parse($('ioText').value)}catch(e){$('editStatus').textContent='呢段唔係有效 JSON · that is not valid JSON.';return}
+  const clean=validSets(v);
+  if(!clean){$('editStatus').textContent='格式唔啱 — 需要 {"sets":[…]}。 Not a valid card export.';return}
+  SETS=clean;
+  if(!SETS.some(x=>x.id===setId))setId=SETS[0].id;
+  editSetId=SETS[0].id;
+  commitSets(true);openEditor();
+  $('editStatus').textContent='已匯入 ✓ imported '+SETS.length+' 組 · '+TOTAL+' 張字卡.';
+};
+$('resetSetsBtn').onclick=()=>{
+  if(!confirm('回復出廠 80 個字？你自己改過嘅字卡（呢部裝置）會唔見。Reset to the built-in cards? Your edits on this device will be removed.'))return;
+  if(!NOSTORAGE){try{localStorage.removeItem(SETS_KEY)}catch(e){}}
+  SETS=cloneSets(BUILTIN_SETS);
+  if(!SETS.some(x=>x.id===setId))setId=SETS[0].id;
+  editSetId=SETS[0].id;
+  commitSets(true,false);openEditor();
+  $('editStatus').textContent='回復咗預設字卡 · reset to the built-in cards.';
+};
+function renderName(){
+  const name=studentName();
+  $('greeting').textContent='Hi '+name+'! 認一認、讀一讀、配一配。';
+  $('footName').textContent='Made for '+name+', with room to grow.';
+  $('pTitle').textContent=name+'’s characters, at a glance';
+  document.title=name+'’s Character Garden · 認字樂園';
+}
+
+// ---- init ----
+buildRound();renderSets();renderStage();renderProgress();renderName();refreshVoices();
+</script>
+</body></html>
