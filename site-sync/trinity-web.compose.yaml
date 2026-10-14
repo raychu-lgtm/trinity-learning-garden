@@ -3,6 +3,9 @@
 # Caddyfile mount and ports unchanged; image uses the plain caddy:2 tag.
 # The Caddyfile (copy in site-sync/Caddyfile) adds POST /api/ai → Kimi. The key
 # is pasted by Ray into the NAS compose ONLY — this repo copy keeps a placeholder.
+# timetable-save (added Oct 2026) stores Trinity's Timetable; Caddy reaches it as
+# timetable-save:8080 on the project network (no published port). FAMILY_PIN is
+# also pasted on the NAS only.
 services:
   trinity:
     image: caddy:2
@@ -21,3 +24,33 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  timetable-save:
+    image: python:3.13-alpine
+    restart: unless-stopped
+    user: "1000:10"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 32
+    mem_limit: 64m
+    cpus: 0.25
+    environment:
+      FAMILY_PIN: "<pasted on the NAS only, never committed>"
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python", "-u", "/app/server.py"]
+    volumes:
+      - /volume2/appdata/home-platform/trinity/timetable-save/server.py:/app/server.py:ro
+      - /volume2/appdata/home-platform/trinity/timetable-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=3)"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
