@@ -1,5 +1,6 @@
 # trinity-web — learn.raychufamily.com (behind Cloudflare Tunnel → :8090 → :80)
-# Static site from /srv (the git-sync clone's site/ folder) + POST /api/ai → Kimi.
+# Static site from /srv (the git-sync clone's site/ folder) + POST /api/ai → Kimi
+# + GET/PUT /api/timetable → the timetable-save container (same compose project).
 # The Kimi key comes ONLY from the container environment MOONSHOT_API_KEY.
 # Never put the key in this file or in the repo.
 {
@@ -51,6 +52,37 @@
 			transport http {
 				response_header_timeout 60s
 			}
+		}
+	}
+
+	# ---- Timetable saving: GET/PUT /api/timetable → timetable-save:8080 ----
+	# The family PIN is checked by timetable-save (header X-Family-Pin).
+	@timetable path /api/timetable
+	handle @timetable {
+		@badmethod not method GET PUT
+		respond @badmethod 405
+
+		# Saves may only come from pages of this site.
+		@foreignput {
+			method PUT
+			not header Origin https://learn.raychufamily.com
+		}
+		respond @foreignput 403
+
+		request_body {
+			max_size 1MB
+		}
+
+		reverse_proxy {$TIMETABLE_UPSTREAM:timetable-save:8080} {
+			header_up -Cookie
+			header_up -Referer
+			header_up -Cf-Connecting-Ip
+			header_up -Cf-Ipcountry
+			header_up -Cf-Ray
+			header_up -Cf-Visitor
+			header_up -Cdn-Loop
+			header_down -Set-Cookie
+			header_down Cache-Control "no-store"
 		}
 	}
 

@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--ink:#294a40;--green:#376951;--mint:#e9f0e4;--cream:#fbf9f1;--gold:#ebbb55;--muted:#718076;--card:#fff;--line:#e3e8dc;
---maths:#376951;--maths-bg:#e9f0e4;--chi:#a8433a;--chi-bg:#f7e6e2;--eng:#3f5f8f;--eng-bg:#e6ecf5;--sci:#9a5a2a;--sci-bg:#f6ebdd}
+--maths:#376951;--maths-bg:#e9f0e4;--chi:#a8433a;--chi-bg:#f7e6e2;--eng:#3f5f8f;--eng-bg:#e6ecf5;--sci:#9a5a2a;--sci-bg:#f6ebdd;--day:#c0662a;--day-bg:#fdeedd}
 *{box-sizing:border-box}
 body{margin:0;background:var(--cream);color:var(--ink);font-family:Nunito,'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;line-height:1.45}
 a{color:inherit}
@@ -46,6 +46,7 @@ a.card:focus-visible{outline:3px solid #aa6c27;outline-offset:4px}
 .chinese{--accent:var(--chi);--accent-bg:var(--chi-bg)}
 .english{--accent:var(--eng);--accent-bg:var(--eng-bg)}
 .science{--accent:var(--sci);--accent-bg:var(--sci-bg)}
+.myday{--accent:var(--day);--accent-bg:var(--day-bg)}
 footer{margin-top:46px;color:var(--muted);font-size:13px;font-weight:700;text-align:center}
 @media (max-width:640px){.shell{padding:20px 16px 36px}.hero{padding:22px;border-radius:22px}.total{width:100%}}
 </style>
@@ -82,6 +83,11 @@ footer{margin-top:46px;color:var(--muted);font-size:13px;font-weight:700;text-al
 <section class="subject science" aria-labelledby="h-sci">
 <div class="subject-head"><span class="chip" style="background:var(--sci)"></span><h2 id="h-sci">Science</h2><span class="zh">科學</span></div>
 <div class="grid"><div class="card soon science" aria-disabled="true"><div class="icon">✿</div><h3>Coming soon</h3><p>Plants, animals and the sky · 快將推出</p></div></div>
+</section>
+
+<section class="subject myday" aria-labelledby="h-day">
+<div class="subject-head"><span class="chip" style="background:var(--day)"></span><h2 id="h-day">My Day</h2><span class="zh">我的一天</span></div>
+<div class="grid"><a class="card myday" href="my-day/timetable/"><div class="icon">📌</div><h3>My Timetable</h3><p>Plan my week · 我的時間表</p><div class="go">Open →</div></a></div>
 </section>
 
 <footer>Made for Trinity, with room to grow. Progress is saved on this device for now.</footer>
