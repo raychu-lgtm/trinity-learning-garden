@@ -1,12 +1,16 @@
 # trinity-web: unmodified except the site volume now points at the sync
 # container's clone (repo/site) instead of the old hand-uploaded folder.
 # Caddyfile mount and ports unchanged; image uses the plain caddy:2 tag.
+# The Caddyfile (copy in site-sync/Caddyfile) adds POST /api/ai → Kimi. The key
+# is pasted by Ray into the NAS compose ONLY — this repo copy keeps a placeholder.
 services:
   trinity:
     image: caddy:2
     restart: unless-stopped
     ports:
       - "8090:80"
+    environment:
+      MOONSHOT_API_KEY: "<pasted on the NAS only, never committed>"
     volumes:
       - /volume2/appdata/home-platform/trinity/site-sync-data/repo/site:/srv:ro
       - /volume2/appdata/home-platform/trinity/Caddyfile:/etc/caddy/Caddyfile:ro
