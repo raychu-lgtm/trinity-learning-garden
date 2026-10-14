@@ -1,0 +1,61 @@
+# trinity-web — learn.raychufamily.com (behind Cloudflare Tunnel → :8090 → :80)
+# Static site from /srv (the git-sync clone's site/ folder) + POST /api/ai → Kimi.
+# The Kimi key comes ONLY from the container environment MOONSHOT_API_KEY.
+# Never put the key in this file or in the repo.
+{
+	admin off
+}
+
+:80 {
+	root * /srv
+	encode zstd gzip
+
+	# ---- AI proxy: POST /api/ai → https://api.moonshot.cn/v1/chat/completions ----
+	# Exact path only; /api/ai/anything falls through to file_server → 404.
+	# (Caddy runs rewrite before respond, so the checks below must not depend on the path.)
+	@ai path /api/ai
+	handle @ai {
+		@notpost not method POST
+		respond @notpost 405
+
+		# Only pages of this site may call it (browsers always send Origin on POST).
+		@foreign not header Origin https://learn.raychufamily.com
+		respond @foreign 403
+
+		# Not configured yet → clear 503 instead of a confusing upstream 401.
+		@nokey expression `{env.MOONSHOT_API_KEY} == ""`
+		respond @nokey 503
+
+		request_body {
+			max_size 16KB
+		}
+
+		rewrite * /v1/chat/completions
+		reverse_proxy {$MOONSHOT_UPSTREAM:https://api.moonshot.cn} {
+			header_up Host {upstream_hostport}
+			header_up Authorization "Bearer {env.MOONSHOT_API_KEY}"
+			# Don't pass visitor details or cookies upstream
+			header_up -Cookie
+			header_up -Origin
+			header_up -Referer
+			header_up -X-Forwarded-For
+			header_up -X-Forwarded-Host
+			header_up -X-Forwarded-Proto
+			header_up -X-Real-Ip
+			header_up -Cf-Connecting-Ip
+			header_up -Cf-Ipcountry
+			header_up -Cf-Ray
+			header_up -Cf-Visitor
+			header_up -Cdn-Loop
+			header_down -Set-Cookie
+			transport http {
+				response_header_timeout 60s
+			}
+		}
+	}
+
+	# ---- Static site ----
+	handle {
+		file_server
+	}
+}
